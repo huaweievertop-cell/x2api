@@ -63,7 +63,7 @@
 #### D. 调度模块 `.github/workflows/`
 
 - `Twitter Monitor`
-  - 每 12 分钟运行一次采集
+  - 每 6 分钟运行一次采集
 - `Cleanup Stored Tweets`
   - 定期清理历史数据
 - `Update Nitter Instances`
