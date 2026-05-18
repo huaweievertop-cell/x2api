@@ -1,21 +1,60 @@
 import { requireClient } from "@/lib/auth";
 import { jsonError, jsonOk } from "@/lib/http";
 import { listItems } from "@/lib/item-service";
+import { PaginationInputError } from "@/lib/pagination";
+
+function parsePositiveInt(raw: string | null, field: string) {
+  if (raw === null) {
+    return undefined;
+  }
+
+  if (!/^\d+$/.test(raw)) {
+    throw new Error(`Invalid ${field}. Expected a positive integer.`);
+  }
+
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new Error(`Invalid ${field}. Expected a positive integer.`);
+  }
+
+  return value;
+}
+
+function parseSince(raw: string | null) {
+  if (raw === null) {
+    return undefined;
+  }
+
+  const since = new Date(raw);
+  if (Number.isNaN(since.getTime())) {
+    throw new Error("Invalid since. Expected an ISO8601 datetime string.");
+  }
+
+  return raw;
+}
 
 export async function GET(request: Request) {
   try {
     const client = await requireClient();
     const { searchParams } = new URL(request.url);
-    const items = await listItems({
+    const result = await listItems({
       clientId: client.id,
-      limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined,
+      limit: parsePositiveInt(searchParams.get("limit"), "limit"),
+      cursor: searchParams.get("cursor"),
       keyword: searchParams.get("keyword"),
       target: searchParams.get("target"),
-      since: searchParams.get("since"),
+      since: parseSince(searchParams.get("since")),
     });
 
-    return jsonOk({ items });
+    return jsonOk(result);
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Unauthorized.", 401);
+    const message = error instanceof Error ? error.message : "Failed to query items.";
+    if (message === "Missing API key." || message === "Invalid API key.") {
+      return jsonError(message, 401);
+    }
+    if (error instanceof PaginationInputError || message.startsWith("Invalid ")) {
+      return jsonError(message, 400);
+    }
+    return jsonError(message, 500);
   }
 }

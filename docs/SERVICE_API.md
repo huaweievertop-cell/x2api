@@ -425,9 +425,13 @@ curl -sS -X DELETE "$X2API_BASE/api/subscriptions" \
 
 - `limit`
   - 可选
-  - 返回条数
+  - 每次返回条数
   - 默认 `20`
   - 范围 `1-100`
+- `cursor`
+  - 可选
+  - 上一页返回的游标
+  - 不传时返回第一页
 - `target`
   - 可选
   - 按目标精确过滤
@@ -468,6 +472,13 @@ curl -sS "$X2API_BASE/api/items?since=2026-05-18T00:00:00.000Z&limit=20" \
   -H "Authorization: Bearer $X2API_KEY"
 ```
 
+使用上一页返回的游标继续读取：
+
+```bash
+curl -sS "$X2API_BASE/api/items?limit=10&cursor=eyJ2IjoxLCJwYXlsb2FkIjp7Li4ufX0" \
+  -H "Authorization: Bearer $X2API_KEY"
+```
+
 #### 成功响应 `200`
 
 ```json
@@ -493,7 +504,12 @@ curl -sS "$X2API_BASE/api/items?since=2026-05-18T00:00:00.000Z&limit=20" \
       "guid": "1891234567890123456",
       "isRetweet": false
     }
-  ]
+  ],
+  "pagination": {
+    "limit": 10,
+    "nextCursor": "eyJ2IjoxLCJwYXlsb2FkIjp7InNvcnRUaW1lIjoiMjAyNi0wNS0xOFQxNDoyMDowMC4wMDBaIiwic3RvcmVkQXQiOiIyMDI2LTA1LTE4VDE0OjIxOjEwLjAwMFoiLCJpZCI6Iml0ZW0tdXVpZCJ9fQ",
+    "hasMore": true
+  }
 }
 ```
 
@@ -523,13 +539,22 @@ curl -sS "$X2API_BASE/api/items?since=2026-05-18T00:00:00.000Z&limit=20" \
   - 写入数据库时间
 - `guid`
   - 原始内容唯一标识
+- `pagination.limit`
+  - 当前请求的返回条数上限
+- `pagination.nextCursor`
+  - 下一页游标，没有更多数据时为 `null`
+- `pagination.hasMore`
+  - 是否还有下一页
 
 #### 排序规则
 
-按以下顺序倒序返回：
+按以下稳定顺序倒序返回：
 
 1. `publishedAt`
 2. `storedAt`
+3. `id`
+
+下一页会从上一页最后一条记录之后继续读取，不支持直接跳到任意页。
 
 ## 9. RSS 订阅接口
 
@@ -694,7 +719,7 @@ curl -sS "https://x2api-service.vercel.app/rss/feed_xxxxxxxxxxxxxxxxxxxxx.xml"
 
 - 采集稳定性依赖第三方 Nitter/X 来源
 - 当前没有传统登录、权限分级和配额体系
-- 当前没有分页接口，`/api/items` 主要适合最近数据查询
+- `/api/items` 当前使用 cursor 分页，不提供总页数，也不支持直接跳到任意页
 - RSS URL 若泄漏，任何拿到链接的人都可以读取该客户端订阅流
 - `POST /api/client/register` 当前默认开放
 
@@ -702,7 +727,7 @@ curl -sS "https://x2api-service.vercel.app/rss/feed_xxxxxxxxxxxxxxxxxxxxx.xml"
 
 - 增加客户端禁用、轮换 `apiKey`、轮换 `feedToken`
 - 增加管理后台或管理员接口
-- 增加分页与游标查询
+- 为更多列表接口复用统一 cursor 分页能力
 - 增加 Webhook / Push 推送
 - 增加订阅分组与标签
 - 为开放注册增加简单风控或管理令牌

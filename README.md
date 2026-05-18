@@ -131,9 +131,12 @@ Authorization: Bearer x2d_xxx
 支持参数：
 
 - `limit`
+- `cursor`
 - `target`
 - `keyword`
 - `since`
+
+响应包含 `items` 和 `pagination`，其中 `pagination.nextCursor` 用于继续拉下一页。
 
 ### `GET /rss/:feedToken.xml`
 
