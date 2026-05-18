@@ -793,7 +793,7 @@ def command_register_client(args) -> int:
         with conn.transaction():
             client = register_client(conn, args.label)
         payload = {
-            "id": client["id"],
+            "id": str(client["id"]),
             "label": client["label"],
             "apiKey": client["api_key"],
             "feedToken": client["feed_token"],
