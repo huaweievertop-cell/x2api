@@ -53,10 +53,23 @@ def now_iso() -> str:
 def parse_datetime(value: str | None) -> datetime | None:
     if not value:
         return None
+    normalized = value.strip()
+
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return datetime.fromisoformat(normalized.replace("Z", "+00:00"))
     except ValueError:
-        return None
+        pass
+
+    for fmt in (
+        "%b %d, %Y · %I:%M %p UTC",
+        "%b %d, %Y %I:%M %p UTC",
+    ):
+        try:
+            return datetime.strptime(normalized, fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+
+    return None
 
 
 def ensure_data_dirs() -> None:
