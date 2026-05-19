@@ -482,6 +482,7 @@ def scrape_nitter_with_playwright(
                     link_el = item.select_one(".tweet-link")
                     date_el = item.select_one(".tweet-date a")
                     author_el = item.select_one(".username")
+                    fullname_el = item.select_one(".fullname")
                     if not content_el or not link_el:
                         continue
 
@@ -503,6 +504,7 @@ def scrape_nitter_with_playwright(
                         "x_url": nitter_to_x_url(nitter_link),
                         "published": published,
                         "author": author_el.get_text(strip=True) if author_el else keyword,
+                        "fullname": fullname_el.get_text(" ", strip=True) if fullname_el else None,
                         "guid": tweet_id,
                         "is_retweet": is_retweet,
                         "images": images,
@@ -718,6 +720,7 @@ def insert_items(conn, target_row: dict, tweets: list[dict], previous_id: str | 
                     target_id,
                     guid,
                     author,
+                    fullname,
                     title,
                     content,
                     raw_content,
@@ -732,7 +735,7 @@ def insert_items(conn, target_row: dict, tweets: list[dict], previous_id: str | 
                     metadata
                 )
                 VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
                 ON CONFLICT (target_id, guid) DO NOTHING
                 """,
@@ -740,6 +743,7 @@ def insert_items(conn, target_row: dict, tweets: list[dict], previous_id: str | 
                     target_row["id"],
                     tweet.get("guid"),
                     tweet.get("author"),
+                    tweet.get("fullname"),
                     title or None,
                     tweet.get("content"),
                     tweet.get("raw_content"),
@@ -821,6 +825,7 @@ def query_records(
             SELECT
                 i.guid,
                 i.author,
+                i.fullname,
                 i.title,
                 i.content,
                 i.raw_content,
@@ -888,6 +893,7 @@ def query_records(
             {
                 "target": format_target(row["kind"], row["value"]),
                 "author": row["author"],
+                "fullname": row["fullname"],
                 "guid": row["guid"],
                 "title": row["title"],
                 "content": row["content"],
@@ -909,6 +915,8 @@ def print_record(record: dict, index: int | None = None) -> None:
     prefix = f"{index}. " if index is not None else ""
     print(f"{prefix}[{record.get('stored_at', '-')}] {record.get('target', '-')}")
     print(f"   作者: {record.get('author', '-')}")
+    if record.get("fullname"):
+        print(f"   昵称: {record['fullname']}")
     print(f"   ID: {record.get('guid', '-')}")
     print(f"   内容: {record.get('content', '').strip()}")
     if record.get("translated_content"):

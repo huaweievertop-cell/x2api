@@ -27,6 +27,7 @@ export type ItemRecord = {
   target: string;
   kind: "user" | "keyword";
   author: string | null;
+  fullname: string | null;
   title: string | null;
   content: string | null;
   rawContent: string | null;
@@ -121,6 +122,7 @@ export async function listItems(query: ItemQuery): Promise<ListItemsResult> {
       END AS target,
       t.kind,
       i.author,
+      i.fullname,
       i.title,
       i.content,
       i.raw_content AS "rawContent",
@@ -174,6 +176,7 @@ export async function listItemsByFeedToken(feedToken: string, limit = 50) {
       END AS target,
       t.kind,
       i.author,
+      i.fullname,
       i.title,
       i.content,
       i.raw_content AS "rawContent",

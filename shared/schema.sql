@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS items (
     target_id UUID NOT NULL REFERENCES targets(id) ON DELETE CASCADE,
     guid TEXT NOT NULL,
     author TEXT,
+    fullname TEXT,
     title TEXT,
     content TEXT,
     raw_content TEXT,

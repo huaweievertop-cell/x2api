@@ -489,6 +489,7 @@ curl -sS "$X2API_BASE/api/items?limit=10&cursor=eyJ2IjoxLCJwYXlsb2FkIjp7Li4ufX0"
       "target": "search:特朗普",
       "kind": "keyword",
       "author": "some_author",
+      "fullname": "Some Author",
       "title": null,
       "content": "抓取后的主内容",
       "rawContent": "原始内容",
@@ -519,6 +520,10 @@ curl -sS "$X2API_BASE/api/items?limit=10&cursor=eyJ2IjoxLCJwYXlsb2FkIjp7Li4ufX0"
   - 当前命中的订阅目标
 - `kind`
   - `user` 或 `keyword`
+- `author`
+  - 作者账号名，通常是 `@username`
+- `fullname`
+  - 作者昵称/显示名
 - `content`
   - 主内容
 - `rawContent`
