@@ -525,6 +525,7 @@ def scrape_nitter_with_playwright(
                         images.append(get_original_image_url(full_src))
 
                     video_url = None
+                    video_poster_url = None
                     try:
                         video_el = item.select_one("video source") or item.select_one("video")
                         if video_el:
@@ -538,9 +539,9 @@ def scrape_nitter_with_playwright(
                                         full_poster = instance.rstrip("/") + poster
                                     else:
                                         full_poster = poster
-                                    full_poster = get_original_image_url(full_poster)
-                                    if full_poster not in images:
-                                        images.append(full_poster)
+                                    video_poster_url = get_original_image_url(full_poster)
+                                    if video_poster_url not in images:
+                                        images.append(video_poster_url)
 
                             v_src = (
                                 video_el.get("src", "")
@@ -583,6 +584,7 @@ def scrape_nitter_with_playwright(
                         "is_retweet": is_retweet,
                         "images": images,
                         "video_url": video_url,
+                        "video_poster_url": video_poster_url,
                         "stored_at": now_iso(),
                         "source_instance": instance,
                     }
@@ -729,6 +731,95 @@ def remove_subscriptions(conn, client_id: str, targets: list[str]) -> None:
             )
 
 
+DEFAULT_SYSTEM_TARGETS = [
+    {"target": "search:AI video", "category": "科技", "tags": ["AI", "科技"], "weight": 10},
+    {"target": "search:robot demo", "category": "科技", "tags": ["机器人", "科技"], "weight": 8},
+    {"target": "search:funny video", "category": "搞笑", "tags": ["搞笑"], "weight": 8},
+    {"target": "search:cat video", "category": "宠物", "tags": ["猫", "宠物"], "weight": 7},
+    {"target": "search:dog video", "category": "宠物", "tags": ["狗", "宠物"], "weight": 7},
+    {"target": "search:NBA highlights", "category": "体育", "tags": ["NBA", "篮球", "体育"], "weight": 8},
+    {"target": "search:football highlights", "category": "体育", "tags": ["足球", "体育"], "weight": 7},
+    {"target": "search:movie trailer", "category": "影视", "tags": ["电影", "预告片", "影视"], "weight": 6},
+    {"target": "search:game trailer", "category": "游戏", "tags": ["游戏", "预告片"], "weight": 6},
+    {"target": "search:music video", "category": "音乐", "tags": ["音乐"], "weight": 6},
+]
+
+
+def parse_system_targets_file(path: str | None) -> list[dict]:
+    if not path:
+        return DEFAULT_SYSTEM_TARGETS
+
+    with open(path, "r", encoding="utf-8") as file:
+        payload = json.load(file)
+
+    if not isinstance(payload, list):
+        raise ValueError("System targets file must contain a JSON array.")
+
+    targets = []
+    for item in payload:
+        if isinstance(item, str):
+            targets.append({"target": item, "category": None, "tags": [], "weight": 0})
+            continue
+        if not isinstance(item, dict) or not str(item.get("target") or "").strip():
+            raise ValueError("Each system target must be a string or object with target.")
+        tags = item.get("tags") or []
+        if not isinstance(tags, list):
+            raise ValueError("System target tags must be a list.")
+        targets.append(
+            {
+                "target": str(item["target"]).strip(),
+                "category": str(item.get("category") or "").strip() or None,
+                "tags": [str(tag).strip() for tag in tags if str(tag).strip()],
+                "weight": int(item.get("weight") or 0),
+            }
+        )
+    return targets
+
+
+def seed_system_targets(conn, target_configs: list[dict]) -> dict[str, int]:
+    upserted = 0
+    with conn.cursor() as cur:
+        for config in target_configs:
+            target_row = upsert_target(conn, config["target"])
+            cur.execute(
+                """
+                INSERT INTO target_profiles (target_id, scope, tags, category, weight, is_public_pool)
+                VALUES (%s, 'system', %s, %s, %s, TRUE)
+                ON CONFLICT (target_id) DO UPDATE SET
+                    scope = 'system',
+                    tags = EXCLUDED.tags,
+                    category = EXCLUDED.category,
+                    weight = EXCLUDED.weight,
+                    is_public_pool = TRUE,
+                    updated_at = NOW()
+                """,
+                (target_row["id"], Jsonb(config.get("tags") or []), config.get("category"), int(config.get("weight") or 0)),
+            )
+            upserted += 1
+    return {"upserted": upserted}
+
+
+def load_system_targets(conn) -> list[dict]:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                t.id,
+                t.kind,
+                t.value,
+                t.normalized_value,
+                cs.last_guid
+            FROM targets t
+            INNER JOIN target_profiles tp ON tp.target_id = t.id
+            LEFT JOIN crawl_state cs ON cs.target_id = t.id
+            WHERE tp.scope = 'system'
+              AND tp.is_public_pool = TRUE
+            ORDER BY tp.weight DESC, t.kind, LOWER(t.value)
+            """
+        )
+        return cur.fetchall()
+
+
 def register_client(conn, label: str | None) -> dict:
     api_key = create_opaque_token("x2d")
     feed_token = create_opaque_token("feed")
@@ -786,6 +877,7 @@ def insert_items(conn, target_row: dict, tweets: list[dict], previous_id: str | 
                 "target_value": tweet.get("target_value"),
                 "published_raw": tweet.get("published"),
                 "source_instance": tweet.get("source_instance"),
+                "video_poster_url": tweet.get("video_poster_url"),
             }
 
             cur.execute(
@@ -1037,6 +1129,12 @@ def command_monitor(args) -> int:
     with get_db_connection() as conn:
         if args.targets:
             target_rows = [upsert_target(conn, target) for target in parse_targets(args.targets)]
+        elif args.system_only:
+            target_rows = load_system_targets(conn)
+        elif args.include_system:
+            target_map = {row["id"]: row for row in load_active_targets(conn)}
+            target_map.update({row["id"]: row for row in load_system_targets(conn)})
+            target_rows = list(target_map.values())
         else:
             target_rows = load_active_targets(conn)
 
@@ -1184,6 +1282,15 @@ def command_cleanup(args) -> int:
     return 0
 
 
+def command_seed_system_targets(args) -> int:
+    target_configs = parse_system_targets_file(args.file)
+    with get_db_connection() as conn:
+        stats = seed_system_targets(conn, target_configs)
+        conn.commit()
+    print(json.dumps({**stats, "targets": [config["target"] for config in target_configs]}, ensure_ascii=False, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Twitter/X 监控与 PostgreSQL 存储工具")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1197,6 +1304,8 @@ def build_parser() -> argparse.ArgumentParser:
     monitor_parser.add_argument("--retention-days", type=int, default=None, help="保留天数")
     monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
     monitor_parser.add_argument("--skip-cleanup", action="store_true", help="本轮监控后不执行清理")
+    monitor_parser.add_argument("--include-system", action="store_true", help="同时抓取系统公共视频池目标")
+    monitor_parser.add_argument("--system-only", action="store_true", help="只抓取系统公共视频池目标")
     monitor_parser.add_argument("--shard-index", type=int, default=0, help="当前分片编号，从 0 开始")
     monitor_parser.add_argument("--shard-count", type=int, default=1, help="总分片数")
     monitor_parser.set_defaults(func=command_monitor)
@@ -1221,6 +1330,10 @@ def build_parser() -> argparse.ArgumentParser:
     cleanup_parser.add_argument("--retention-days", type=int, default=None, help="保留天数")
     cleanup_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
     cleanup_parser.set_defaults(func=command_cleanup)
+
+    seed_system_parser = subparsers.add_parser("seed-system-targets", help="初始化系统公共视频池目标")
+    seed_system_parser.add_argument("--file", help="系统目标 JSON 文件；默认使用内置目标")
+    seed_system_parser.set_defaults(func=command_seed_system_targets)
 
     return parser
 

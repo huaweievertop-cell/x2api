@@ -67,6 +67,71 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_target_id ON subscriptions (target_
 CREATE INDEX IF NOT EXISTS idx_items_target_id_stored_at ON items (target_id, stored_at DESC);
 CREATE INDEX IF NOT EXISTS idx_items_stored_at ON items (stored_at DESC);
 CREATE INDEX IF NOT EXISTS idx_items_published_at ON items (published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_items_video_feed ON items (stored_at DESC) WHERE video_url IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS target_profiles (
+    target_id UUID PRIMARY KEY REFERENCES targets(id) ON DELETE CASCADE,
+    scope TEXT NOT NULL DEFAULT 'user',
+    tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+    category TEXT,
+    weight INTEGER NOT NULL DEFAULT 0,
+    is_public_pool BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT target_profiles_scope_check CHECK (scope IN ('user', 'system'))
+);
+
+CREATE TABLE IF NOT EXISTS tags (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    type TEXT NOT NULL DEFAULT 'topic',
+    weight INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT tags_type_check CHECK (type IN ('category', 'topic', 'system'))
+);
+
+CREATE TABLE IF NOT EXISTS item_tags (
+    item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    source TEXT NOT NULL DEFAULT 'rule',
+    confidence NUMERIC(4,3) NOT NULL DEFAULT 1.0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (item_id, tag_id),
+    CONSTRAINT item_tags_source_check CHECK (source IN ('target', 'rule', 'manual', 'ai'))
+);
+
+CREATE TABLE IF NOT EXISTS video_stats (
+    item_id UUID PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
+    impressions INTEGER NOT NULL DEFAULT 0,
+    plays INTEGER NOT NULL DEFAULT 0,
+    finishes INTEGER NOT NULL DEFAULT 0,
+    likes INTEGER NOT NULL DEFAULT 0,
+    dislikes INTEGER NOT NULL DEFAULT 0,
+    skips INTEGER NOT NULL DEFAULT 0,
+    shares INTEGER NOT NULL DEFAULT 0,
+    score NUMERIC(8,3) NOT NULL DEFAULT 0,
+    last_event_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS feed_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    watch_ms INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    CONSTRAINT feed_events_type_check CHECK (
+        event_type IN ('impression', 'play', 'finish', 'like', 'dislike', 'skip', 'share')
+    )
+);
+
+CREATE INDEX IF NOT EXISTS idx_target_profiles_public_pool ON target_profiles (is_public_pool, weight DESC);
+CREATE INDEX IF NOT EXISTS idx_tags_type_weight ON tags (type, weight DESC, name);
+CREATE INDEX IF NOT EXISTS idx_item_tags_tag_id ON item_tags (tag_id);
+CREATE INDEX IF NOT EXISTS idx_feed_events_client_item ON feed_events (client_id, item_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feed_events_created_at ON feed_events (created_at DESC);
 
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$

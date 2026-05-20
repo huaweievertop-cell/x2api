@@ -1,0 +1,59 @@
+name: Video Feed Maintenance
+
+concurrency:
+  group: x2ding-video-feed-maintenance
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      tag_limit:
+        description: '单次打标签扫描条数'
+        required: false
+        default: '500'
+      apply_cleanup:
+        description: '是否执行清理: true / false'
+        required: false
+        default: 'true'
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: collector/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r collector/requirements.txt
+
+      - name: Seed system video targets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python collector/twitter_monitor.py seed-system-targets
+
+      - name: Backfill video tags
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TAG_LIMIT: ${{ inputs.tag_limit || '500' }}
+        run: |
+          python scripts/backfill_video_tags.py --apply --limit "${TAG_LIMIT}"
+
+      - name: Cleanup video feed data
+        if: inputs.apply_cleanup != 'false'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python scripts/cleanup_video_feed_data.py --apply

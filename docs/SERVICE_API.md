@@ -754,3 +754,154 @@ curl -sS "https://x2api-service.vercel.app/rss/feed_xxxxxxxxxxxxxxxxxxxxx.xml"
   - `service/src/lib/rss.ts`
 - 数据库结构：
   - `shared/schema.sql`
+
+## 12. 视频 Feed 扩展接口
+
+视频 Feed 是旁路能力，不改变现有订阅、JSON 查询和 RSS 接口。它复用 `items.video_url` 中已有的视频内容，并通过标签、公共池和行为事件提供刷视频体验。
+
+### 12.1 数据来源
+
+- 用户订阅内容：来自当前客户端订阅目标下的 `items`。
+- 公共视频池：来自 `target_profiles.is_public_pool = true` 的系统目标。
+- 标签：来自 `item_tags`，也可继承 `target_profiles.tags`。
+
+### 12.2 `GET /api/videos/feed`
+
+返回视频流。
+
+请求头：
+
+```http
+Authorization: Bearer x2d_xxx
+```
+
+查询参数：
+
+- `limit`：默认 `10`，最大 `20`
+- `cursor`：上一页返回的游标
+- `tag`：按标签过滤
+- `category`：按分类过滤
+- `source`：`mixed`、`user`、`public`，默认 `mixed`
+
+响应：
+
+```json
+{
+  "items": [
+    {
+      "id": "item_uuid",
+      "videoUrl": "https://video.twimg.com/...",
+      "coverUrl": "https://pbs.twimg.com/...",
+      "title": "...",
+      "caption": "...",
+      "author": "@user",
+      "fullname": "User",
+      "xUrl": "https://x.com/...",
+      "link": "https://nitter...",
+      "publishedAt": "2026-05-21T00:00:00.000Z",
+      "storedAt": "2026-05-21T00:01:00.000Z",
+      "target": "search:AI video",
+      "kind": "keyword",
+      "tags": ["AI", "科技"],
+      "stats": {
+        "impressions": 0,
+        "plays": 0,
+        "finishes": 0,
+        "likes": 0,
+        "dislikes": 0,
+        "skips": 0,
+        "shares": 0,
+        "score": 0
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 10,
+    "nextCursor": null,
+    "hasMore": false
+  }
+}
+```
+
+### 12.3 `POST /api/videos/events`
+
+上报刷视频行为，并同步聚合到 `video_stats`。
+
+请求体：
+
+```json
+{
+  "itemId": "item_uuid",
+  "eventType": "play",
+  "watchMs": 3200,
+  "metadata": {}
+}
+```
+
+`eventType` 支持：
+
+- `impression`
+- `play`
+- `finish`
+- `like`
+- `dislike`
+- `skip`
+- `share`
+
+响应：
+
+```json
+{
+  "ok": true
+}
+```
+
+### 12.4 `GET /api/videos/tags`
+
+返回可用标签。
+
+```json
+{
+  "tags": [
+    {
+      "name": "AI",
+      "type": "topic",
+      "weight": 10
+    }
+  ]
+}
+```
+
+### 12.5 标签脚本
+
+`scripts/backfill_video_tags.py` 使用远程词库给历史视频打标签，默认词库为：
+
+```text
+https://raw.githubusercontent.com/M1Z2105a4/resource/main/ttt_lexicon.json
+```
+
+试运行：
+
+```bash
+DATABASE_URL=... python3 scripts/backfill_video_tags.py --limit 100
+```
+
+写入：
+
+```bash
+DATABASE_URL=... python3 scripts/backfill_video_tags.py --apply --limit 100
+```
+
+### 12.6 清理脚本
+
+试运行：
+
+```bash
+DATABASE_URL=... python3 scripts/cleanup_video_feed_data.py
+```
+
+写入删除：
+
+```bash
+DATABASE_URL=... python3 scripts/cleanup_video_feed_data.py --apply
+```

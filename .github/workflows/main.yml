@@ -94,5 +94,6 @@ jobs:
           SHARD_COUNT: ${{ needs.prepare.outputs.shard_count }}
         run: |
           python twitter_monitor.py monitor \
+            --include-system \
             --shard-index "${SHARD_INDEX}" \
             --shard-count "${SHARD_COUNT}"
