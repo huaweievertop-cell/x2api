@@ -1,6 +1,6 @@
 # x2ding 服务端接口文档
 
-本文档说明 `x2ding / x2api` 服务端的整体架构、核心模块、鉴权方式、JSON 查询接口，以及 RSS 订阅接口。
+本文档说明 `x2api` 服务端的整体架构、核心模块、鉴权方式、JSON 查询接口，以及 RSS 订阅接口。
 
 适用场景：
 
@@ -755,7 +755,7 @@ curl -sS "https://x2api-service.vercel.app/rss/feed_xxxxxxxxxxxxxxxxxxxxx.xml"
 - 数据库结构：
   - `shared/schema.sql`
 
-## 12. 视频 Feed 扩展接口
+## 12. 视频 Feed 相关接口
 
 视频 Feed 是旁路能力，不改变现有订阅、JSON 查询和 RSS 接口。它复用 `items.video_url` 中已有的视频内容，并通过标签、公共池和行为事件提供刷视频体验。
 
