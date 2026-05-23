@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       shard_count:
-        description: '监控分片数，默认 1'
+        description: '监控分片数，默认 4'
         required: false
-        default: '1'
+        default: '4'
 
 jobs:
   prepare:
@@ -26,7 +26,7 @@ jobs:
       - name: Build shard matrix
         id: matrix
         env:
-          INPUT_SHARD_COUNT: ${{ inputs.shard_count || '1' }}
+          INPUT_SHARD_COUNT: ${{ inputs.shard_count || '4' }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
           python - <<'PY'
@@ -89,7 +89,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
           RETENTION_DAYS: '30'
-          MAX_RECORDS: '20000'
+          MAX_RECORDS: '50000'
           SHARD_INDEX: ${{ matrix.shard }}
           SHARD_COUNT: ${{ needs.prepare.outputs.shard_count }}
         run: |
