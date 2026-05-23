@@ -1,5 +1,8 @@
 name: Update Nitter Instances
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: x2ding-main-write
   cancel-in-progress: false

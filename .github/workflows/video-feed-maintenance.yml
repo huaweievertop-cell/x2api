@@ -1,5 +1,8 @@
 name: Video Feed Maintenance
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: x2ding-video-feed-maintenance
   cancel-in-progress: false
