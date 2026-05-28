@@ -127,9 +127,22 @@ Authorization: Bearer x2d_xxx
 
 ```json
 {
-  "targets": ["OpenAI", "search:AI safety"]
+  "targets": [
+    {
+      "target": "OpenAI",
+      "category": "tech",
+      "tags": ["AI", "公司"]
+    },
+    {
+      "target": "search:AI safety",
+      "category": "tech",
+      "tags": ["AI", "安全"]
+    }
+  ]
 }
 ```
+
+`targets` 仍兼容字符串；新客户端建议使用对象格式。对象格式的 `category` 必填，来自 `/api/videos/categories`，`tags` 可由用户自由输入。
 
 ### `POST /api/subscriptions`
 

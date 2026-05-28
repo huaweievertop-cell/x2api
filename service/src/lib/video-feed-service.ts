@@ -41,6 +41,14 @@ export type VideoFeedItem = {
   };
 };
 
+export type VideoCategory = {
+  slug: string;
+  name: string;
+  weight: number;
+  isSensitive: boolean;
+  defaultHidden: boolean;
+};
+
 type VideoFeedCursor = {
   sortTime?: string;
   storedAt?: string;
@@ -295,6 +303,18 @@ export async function listVideoFeed(query: VideoFeedQuery) {
   const cursor = decodeCursor(query.cursor, isVideoFeedCursor);
   const normalizedTag = query.tag?.trim().toLowerCase() || null;
   const normalizedCategory = query.category?.trim().toLowerCase() || null;
+  const categoryName = normalizedCategory
+    ? (
+        asRows<{ name: string }>(await sql`
+          SELECT name
+          FROM categories
+          WHERE LOWER(slug) = ${normalizedCategory}
+             OR LOWER(name) = ${normalizedCategory}
+          LIMIT 1
+        `)[0]?.name ?? null
+      )
+    : null;
+  const normalizedCategoryName = categoryName?.trim().toLowerCase() || normalizedCategory;
   const source = query.source ?? "mixed";
   const itemVideoKey = videoKeyExpression("i");
   const watchedVideoKey = videoKeyExpression("watched_item");
@@ -421,9 +441,10 @@ export async function listVideoFeed(query: VideoFeedQuery) {
             INNER JOIN tags tag ON tag.id = it.tag_id
             WHERE it.item_id = i.id
               AND tag.type = 'category'
-              AND LOWER(tag.name) = ${normalizedCategory}
+              AND (LOWER(tag.name) = ${normalizedCategory} OR LOWER(tag.name) = ${normalizedCategoryName})
           )
           OR LOWER(COALESCE(tp.category, '')) = ${normalizedCategory}
+          OR LOWER(COALESCE(tp.category, '')) = ${normalizedCategoryName}
         )
     ),
     deduped_items AS (
@@ -642,4 +663,20 @@ export async function listVideoTags() {
   `);
 
   return tags;
+}
+
+export async function listVideoCategories() {
+  const sql = getSql();
+  const categories = asRows<VideoCategory>(await sql`
+    SELECT
+      slug,
+      name,
+      weight,
+      is_sensitive AS "isSensitive",
+      default_hidden AS "defaultHidden"
+    FROM categories
+    ORDER BY weight DESC, name ASC
+  `);
+
+  return categories;
 }

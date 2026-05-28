@@ -69,6 +69,49 @@ CREATE INDEX IF NOT EXISTS idx_items_stored_at ON items (stored_at DESC);
 CREATE INDEX IF NOT EXISTS idx_items_published_at ON items (published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_items_video_feed ON items (stored_at DESC) WHERE video_url IS NOT NULL;
 
+CREATE TABLE IF NOT EXISTS categories (
+    slug TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    weight INTEGER NOT NULL DEFAULT 0,
+    is_sensitive BOOLEAN NOT NULL DEFAULT FALSE,
+    default_hidden BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO categories (slug, name, weight, is_sensitive, default_hidden)
+VALUES
+    ('tech', '科技', 240, FALSE, FALSE),
+    ('ai', 'AI', 230, FALSE, FALSE),
+    ('news', '新闻', 220, FALSE, FALSE),
+    ('war', '军事', 210, FALSE, FALSE),
+    ('finance', '金融', 200, FALSE, FALSE),
+    ('markets', '财经', 190, FALSE, FALSE),
+    ('business', '商业', 180, FALSE, FALSE),
+    ('politics', '政治', 170, FALSE, FALSE),
+    ('sports', '体育', 160, FALSE, FALSE),
+    ('games', '游戏', 150, FALSE, FALSE),
+    ('film', '影视', 140, FALSE, FALSE),
+    ('music', '音乐', 130, FALSE, FALSE),
+    ('funny', '搞笑', 120, FALSE, FALSE),
+    ('pets', '宠物', 110, FALSE, FALSE),
+    ('life', '生活', 100, FALSE, FALSE),
+    ('education', '教育', 90, FALSE, FALSE),
+    ('design', '设计', 80, FALSE, FALSE),
+    ('travel', '旅行', 70, FALSE, FALSE),
+    ('auto', '汽车', 60, FALSE, FALSE),
+    ('food', '美食', 50, FALSE, FALSE),
+    ('health', '健康', 40, FALSE, FALSE),
+    ('fashion', '时尚', 30, FALSE, FALSE),
+    ('adult', '成人', 20, TRUE, TRUE),
+    ('other', '其他', 0, FALSE, FALSE)
+ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    weight = EXCLUDED.weight,
+    is_sensitive = EXCLUDED.is_sensitive,
+    default_hidden = EXCLUDED.default_hidden,
+    updated_at = NOW();
+
 CREATE TABLE IF NOT EXISTS target_profiles (
     target_id UUID PRIMARY KEY REFERENCES targets(id) ON DELETE CASCADE,
     scope TEXT NOT NULL DEFAULT 'user',
@@ -150,5 +193,11 @@ EXECUTE FUNCTION set_updated_at();
 DROP TRIGGER IF EXISTS set_targets_updated_at ON targets;
 CREATE TRIGGER set_targets_updated_at
 BEFORE UPDATE ON targets
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+DROP TRIGGER IF EXISTS set_categories_updated_at ON categories;
+CREATE TRIGGER set_categories_updated_at
+BEFORE UPDATE ON categories
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();

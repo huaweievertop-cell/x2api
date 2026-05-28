@@ -1,14 +1,36 @@
 import { getSql } from "@/lib/db";
 import { asRows } from "@/lib/sql-result";
 import { formatTarget, parseTargets, type ParsedTarget } from "@/lib/targets";
+import { listVideoCategories } from "@/lib/video-feed-service";
 
 type DbSubscriptionRow = {
   subscriptionId: string;
   targetId: string;
   kind: "user" | "keyword";
   value: string;
+  category: string | null;
+  tags: string[] | null;
   createdAt: string;
 };
+
+function normalizeKey(value: string) {
+  return value.trim().toLowerCase();
+}
+
+async function normalizeTargetCategory(category: string | null | undefined) {
+  if (!category) {
+    throw new Error("Target category is required.");
+  }
+
+  const key = normalizeKey(category);
+  const categories = await listVideoCategories();
+  const match = categories.find((item) => normalizeKey(item.slug) === key || normalizeKey(item.name) === key);
+  if (!match) {
+    throw new Error("Invalid target category.");
+  }
+
+  return match.slug;
+}
 
 async function ensureTargets(targets: ParsedTarget[]) {
   if (targets.length === 0) {
@@ -47,6 +69,30 @@ async function ensureTargets(targets: ParsedTarget[]) {
   return ensuredTargets;
 }
 
+async function upsertTargetProfiles(targets: ParsedTarget[]) {
+  const configurableTargets = targets.filter((target) => target.category);
+  if (configurableTargets.length === 0) {
+    return;
+  }
+
+  const sql = getSql();
+  for (const target of configurableTargets) {
+    const category = await normalizeTargetCategory(target.category);
+    await sql`
+      INSERT INTO target_profiles (target_id, scope, tags, category, weight, is_public_pool)
+      SELECT id, 'user', ${JSON.stringify(target.tags)}::jsonb, ${category}, 0, FALSE
+      FROM targets
+      WHERE kind = ${target.kind}
+        AND normalized_value = ${target.normalizedValue}
+      ON CONFLICT (target_id) DO UPDATE SET
+        scope = CASE WHEN target_profiles.scope = 'system' THEN target_profiles.scope ELSE 'user' END,
+        tags = EXCLUDED.tags,
+        category = EXCLUDED.category,
+        updated_at = NOW()
+    `;
+  }
+}
+
 export async function listSubscriptions(clientId: string) {
   const sql = getSql();
   const rows = asRows<DbSubscriptionRow>(await sql`
@@ -55,9 +101,12 @@ export async function listSubscriptions(clientId: string) {
       t.id AS "targetId",
       t.kind,
       t.value,
+      tp.category,
+      COALESCE(tp.tags, '[]'::jsonb) AS tags,
       s.created_at AS "createdAt"
     FROM subscriptions s
     INNER JOIN targets t ON t.id = s.target_id
+    LEFT JOIN target_profiles tp ON tp.target_id = t.id
     WHERE s.client_id = ${clientId}
     ORDER BY t.kind, LOWER(t.value)
   `);
@@ -68,6 +117,8 @@ export async function listSubscriptions(clientId: string) {
     target: formatTarget({ kind: row.kind, value: row.value }),
     kind: row.kind,
     value: row.value,
+    category: row.category,
+    tags: row.tags ?? [],
     createdAt: row.createdAt,
   }));
 }
@@ -76,6 +127,7 @@ export async function replaceSubscriptions(clientId: string, rawTargets: unknown
   const sql = getSql();
   const targets = parseTargets(rawTargets);
   const ensuredTargets = await ensureTargets(targets);
+  await upsertTargetProfiles(targets);
 
   await sql`
     DELETE FROM subscriptions
@@ -96,6 +148,7 @@ export async function replaceSubscriptions(clientId: string, rawTargets: unknown
 export async function addSubscriptions(clientId: string, rawTargets: unknown) {
   const targets = parseTargets(rawTargets);
   const ensuredTargets = await ensureTargets(targets);
+  await upsertTargetProfiles(targets);
   const sql = getSql();
 
   for (const target of ensuredTargets) {

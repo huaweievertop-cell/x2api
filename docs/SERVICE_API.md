@@ -295,6 +295,8 @@ curl -sS "$X2API_BASE/api/subscriptions" \
       "target": "search:特朗普",
       "kind": "keyword",
       "value": "特朗普",
+      "category": "news",
+      "tags": ["特朗普", "美国政治"],
       "createdAt": "2026-05-18T14:30:00.000Z"
     },
     {
@@ -303,6 +305,8 @@ curl -sS "$X2API_BASE/api/subscriptions" \
       "target": "elonmusk",
       "kind": "user",
       "value": "elonmusk",
+      "category": null,
+      "tags": [],
       "createdAt": "2026-05-18T14:31:00.000Z"
     }
   ]
@@ -319,7 +323,23 @@ curl -sS "$X2API_BASE/api/subscriptions" \
 
 ```json
 {
-  "targets": ["search:特朗普", "search:马斯克", "elonmusk"]
+  "targets": [
+    {
+      "target": "search:特朗普",
+      "category": "news",
+      "tags": ["特朗普", "美国政治"]
+    },
+    {
+      "target": "search:AI coding",
+      "category": "tech",
+      "tags": ["AI", "编程", "Claude Code"]
+    },
+    {
+      "target": "elonmusk",
+      "category": "business",
+      "tags": ["Tesla", "SpaceX"]
+    }
+  ]
 }
 ```
 
@@ -329,7 +349,7 @@ curl -sS "$X2API_BASE/api/subscriptions" \
 curl -sS -X PUT "$X2API_BASE/api/subscriptions" \
   -H "Authorization: Bearer $X2API_KEY" \
   -H "Content-Type: application/json" \
-  --data '{"targets":["search:特朗普","search:马斯克","elonmusk"]}'
+  --data '{"targets":[{"target":"search:特朗普","category":"news","tags":["特朗普","美国政治"]},{"target":"elonmusk","category":"business","tags":["Tesla","SpaceX"]}]}'
 ```
 
 #### 成功响应
@@ -345,6 +365,8 @@ curl -sS -X PUT "$X2API_BASE/api/subscriptions" \
       "target": "search:特朗普",
       "kind": "keyword",
       "value": "特朗普",
+      "category": "news",
+      "tags": ["特朗普", "美国政治"],
       "createdAt": "2026-05-18T14:30:00.000Z"
     }
   ]
@@ -355,6 +377,10 @@ curl -sS -X PUT "$X2API_BASE/api/subscriptions" \
 
 - 如果传空数组，会清空当前订阅
 - 服务端会自动去重
+- 新对象格式中 `category` 必填，使用 `/api/videos/categories` 返回的 `slug`，也兼容分类中文名
+- `target` 支持 `"search:关键词"` 和用户名
+- `tags` 是用户自由输入标签，服务端会 trim、去重，并限制单个目标最多 12 个标签
+- 为兼容脚本和旧调用，`targets` 里仍可传字符串，例如 `"search:AI safety"`；字符串格式不会写入分类和标签
 
 ### 7.3 增量新增订阅
 
@@ -366,7 +392,18 @@ curl -sS -X PUT "$X2API_BASE/api/subscriptions" \
 
 ```json
 {
-  "targets": ["search:黑料", "realDonaldTrump"]
+  "targets": [
+    {
+      "target": "search:黑料",
+      "category": "news",
+      "tags": ["爆料"]
+    },
+    {
+      "target": "realDonaldTrump",
+      "category": "politics",
+      "tags": ["美国政治"]
+    }
+  ]
 }
 ```
 
@@ -376,7 +413,7 @@ curl -sS -X PUT "$X2API_BASE/api/subscriptions" \
 curl -sS -X POST "$X2API_BASE/api/subscriptions" \
   -H "Authorization: Bearer $X2API_KEY" \
   -H "Content-Type: application/json" \
-  --data '{"targets":["search:黑料","realDonaldTrump"]}'
+  --data '{"targets":[{"target":"search:黑料","category":"news","tags":["爆料"]},{"target":"realDonaldTrump","category":"politics","tags":["美国政治"]}]}'
 ```
 
 #### 说明
@@ -764,6 +801,7 @@ curl -sS "https://x2api-service.vercel.app/rss/feed_xxxxxxxxxxxxxxxxxxxxx.xml"
 - 用户订阅内容：来自当前客户端订阅目标下的 `items`。
 - 公共视频池：来自 `target_profiles.is_public_pool = true` 的系统目标。
 - 标签：来自 `item_tags`，也可继承 `target_profiles.tags`。
+- 分类：来自 `categories` 受控分类表，也可通过 `target_profiles.category` 关联到目标。
 
 ### 12.2 `GET /api/videos/feed`
 
@@ -872,7 +910,46 @@ Authorization: Bearer x2d_xxx
 }
 ```
 
-### 12.5 标签脚本
+### 12.5 `GET /api/videos/categories`
+
+返回视频分类。分类由服务端维护，标签仍可由用户自由输入。
+
+```json
+{
+  "categories": [
+    {
+      "slug": "tech",
+      "name": "科技",
+      "weight": 240,
+      "isSensitive": false,
+      "defaultHidden": false
+    },
+    {
+      "slug": "war",
+      "name": "军事",
+      "weight": 210,
+      "isSensitive": false,
+      "defaultHidden": false
+    },
+    {
+      "slug": "finance",
+      "name": "金融",
+      "weight": 200,
+      "isSensitive": false,
+      "defaultHidden": false
+    },
+    {
+      "slug": "adult",
+      "name": "成人",
+      "weight": 20,
+      "isSensitive": true,
+      "defaultHidden": true
+    }
+  ]
+}
+```
+
+### 12.6 标签脚本
 
 `scripts/backfill_video_tags.py` 使用远程词库给历史视频打标签，默认词库为：
 
