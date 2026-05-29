@@ -866,6 +866,7 @@ Authorization: Bearer x2d_xxx
       "storedAt": "2026-05-21T00:01:00.000Z",
       "target": "search:AI video",
       "kind": "keyword",
+      "category": "tech",
       "tags": ["AI", "科技"],
       "stats": {
         "impressions": 0,

@@ -30,6 +30,7 @@ export type VideoFeedItem = {
   storedAt: string;
   target: string;
   kind: "user" | "keyword";
+  category: string | null;
   tags: string[];
   stats: {
     impressions: number;
@@ -358,6 +359,7 @@ export async function listVideoFeed(query: VideoFeedQuery) {
           ELSE t.value
         END AS target,
         t.kind,
+        tp.category,
         COALESCE(vs.impressions, 0) AS impressions,
         COALESCE(vs.plays, 0) AS plays,
         COALESCE(vs.finishes, 0) AS finishes,
@@ -495,6 +497,7 @@ export async function listVideoFeed(query: VideoFeedQuery) {
       ci."sortTime",
       ci.target,
       ci.kind,
+      ci.category,
       COALESCE((
         SELECT ARRAY_AGG(DISTINCT tag_name ORDER BY tag_name)
         FROM (
