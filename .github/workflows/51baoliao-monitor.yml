@@ -19,7 +19,7 @@ on:
       max_pages:
         description: '单次最多分页数'
         required: false
-        default: '2'
+        default: '4'
 
 jobs:
   monitor-51baoliao:
@@ -48,7 +48,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BASE_URL: ${{ inputs.base_url || vars.BAOLIAO51_BASE_URL || 'https://www.51baoliao01.com' }}
-          MAX_PAGES: ${{ inputs.max_pages || vars.BAOLIAO51_MONITOR_MAX_PAGES || '2' }}
+          MAX_PAGES: ${{ inputs.max_pages || vars.BAOLIAO51_MONITOR_MAX_PAGES || '4' }}
         run: |
           python twitter_monitor.py monitor-51baoliao \
             --base-url "${BASE_URL}" \

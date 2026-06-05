@@ -2695,8 +2695,6 @@ def monitor_cg91_site(conn, *, base_url: str, max_pages: int, retention_hours: i
         )
         if not next_url:
             break
-        if page_inserted == 0 and (page_existing > 0 or page_old == len(list_items)):
-            break
         page_url = next_url
     return {"pages": pages, "parsed_videos": parsed_videos, "verified": verified_count, "inserted": inserted, "updated": updated, "skipped_existing": skipped_existing, "skipped_unverified": skipped_unverified, "samples": samples[:10]}
 
@@ -2915,7 +2913,7 @@ def monitor_baoliao51_site(conn, *, base_url: str, max_pages: int, retention_hou
             f"[51baoliao] page={pages} parsed_videos={page_parsed_videos} verified={page_verified} "
             f"inserted={page_inserted} updated={page_updated} existing={page_existing} old={page_old} unverified={page_unverified}"
         )
-        if not next_url or (page_inserted == 0 and (page_existing > 0 or page_old == len(list_items))):
+        if not next_url:
             break
         page_url = next_url
     return {"pages": pages, "parsed_videos": parsed_videos, "verified": verified_count, "inserted": inserted, "updated": updated, "skipped_existing": skipped_existing, "skipped_unverified": skipped_unverified, "samples": samples[:10]}
@@ -3936,7 +3934,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     cg91_monitor_parser = subparsers.add_parser("monitor-91cg", help="单独抓取 91吃瓜网视频并入库")
     cg91_monitor_parser.add_argument("--base-url", default=CG91_DEFAULT_BASE_URL, help="91吃瓜网站点入口")
-    cg91_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
+    cg91_monitor_parser.add_argument("--max-pages", type=int, default=4, help="单次最多分页数")
     cg91_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
     cg91_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
     cg91_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
@@ -3947,7 +3945,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     baoliao51_monitor_parser = subparsers.add_parser("monitor-51baoliao", help="单独抓取 51爆料网视频并入库")
     baoliao51_monitor_parser.add_argument("--base-url", default=BAOLIAO51_DEFAULT_BASE_URL, help="51爆料网站点入口")
-    baoliao51_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
+    baoliao51_monitor_parser.add_argument("--max-pages", type=int, default=4, help="单次最多分页数")
     baoliao51_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
     baoliao51_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
     baoliao51_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
