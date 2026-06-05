@@ -65,6 +65,12 @@ DOUYIN_DEFAULT_BASE_URL = os.environ.get("DOUYIN_BASE_URL", "https://xygrfrfb3g.
 DOUYIN_RETENTION_HOURS = int(os.environ.get("DOUYIN_RETENTION_HOURS", "84"))
 DOUYIN_REQUEST_TIMEOUT_SECONDS = 30
 DOUYIN_API_SECRET = "x3t8rvtaescfe38s"
+DETAIL_LINK_PROFILE_SOURCES = {
+    HEILIAO_SOURCE,
+    CG91_SOURCE,
+    BAOLIAO51_SOURCE,
+    DOUYIN_SOURCE,
+}
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 VIDEO_THUMB_PREFIXES = (
@@ -375,6 +381,17 @@ def youtube_profile_url(value: str | None) -> str | None:
     return None
 
 
+def http_url(value: str | None) -> str | None:
+    raw = non_empty(value)
+    if not raw or re.search(r"\s", raw):
+        return None
+
+    parsed = urlparse(raw)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+        return None
+    return raw
+
+
 def build_author_presentation(
     *,
     source: str | None,
@@ -398,6 +415,9 @@ def build_author_presentation(
     elif source_key == "youtube":
         author_profile_url = youtube_profile_url(target) or youtube_profile_url(link)
         author_profile_platform = "YouTube" if author_profile_url else None
+    elif source_key in DETAIL_LINK_PROFILE_SOURCES:
+        author_profile_url = http_url(link)
+        author_profile_platform = source_display_name(source_key) if author_profile_url else None
 
     return {
         "display_author": display_author,

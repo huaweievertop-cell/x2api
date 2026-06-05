@@ -15,6 +15,12 @@ export type AuthorPresentation = {
 };
 
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com"]);
+const DETAIL_LINK_PROFILE_PLATFORMS: Record<string, string> = {
+  heiliao: "黑料",
+  cg91: "91吃瓜",
+  baoliao51: "51爆料",
+  douyin: "抖阴",
+};
 
 export function buildAuthorPresentation(input: AuthorPresentationInput): AuthorPresentation {
   const source = normalizePresentationSource(input.source);
@@ -78,6 +84,12 @@ function authorProfile(source: string, input: AuthorPresentationInput) {
       twitterUsername(input.xUrl) ??
       twitterUsername(input.link);
     return username ? { url: `https://x.com/${username}`, platform: "X" } : null;
+  }
+
+  const detailLinkPlatform = DETAIL_LINK_PROFILE_PLATFORMS[source];
+  if (detailLinkPlatform) {
+    const url = httpUrl(input.link);
+    return url ? { url, platform: detailLinkPlatform } : null;
   }
 
   return null;
@@ -184,6 +196,20 @@ function youtubeProfileUrl(value: string | null | undefined) {
     return `https://www.youtube.com/${first}`;
   }
   return null;
+}
+
+function httpUrl(value: string | null | undefined) {
+  const raw = nonEmpty(value);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const url = new URL(raw);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 function youtubeChannelID(value: string | null | undefined) {

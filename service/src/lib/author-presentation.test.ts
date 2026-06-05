@@ -19,16 +19,45 @@ test("buildAuthorPresentation returns X profile only for twitter sources", () =>
       authorProfilePlatform: "X",
     },
   );
+});
 
+test("buildAuthorPresentation uses item detail links for site sources", () => {
+  const cases = [
+    ["heiliao", "黑料", "https://among.uvsoskqus.cc/archives/1"],
+    ["cg91", "91吃瓜", "https://www.91cg1.com/post/1"],
+    ["baoliao51", "51爆料", "https://www.51baoliao01.com/archives/1"],
+    ["douyin", "抖阴", "https://xygrfrfb3g.b2h7y8w.com/v/1"],
+  ] as const;
+
+  for (const [source, platform, link] of cases) {
+    assert.deepEqual(
+      buildAuthorPresentation({
+        source,
+        target: `${source}:https://example.com`,
+        author: `${platform}网`,
+        fullname: `${platform}网`,
+        link,
+      }),
+      {
+        displayAuthor: `${platform}网`,
+        displayHandle: null,
+        authorProfileUrl: link,
+        authorProfilePlatform: platform,
+      },
+    );
+  }
+});
+
+test("buildAuthorPresentation does not use site target homepages as item links", () => {
   assert.deepEqual(
     buildAuthorPresentation({
-      source: "cg91",
+      source: "91",
       target: "cg91:https://www.91cg1.com",
-      author: "@not_x",
-      fullname: null,
+      author: "91吃瓜网",
+      fullname: "91吃瓜网",
     }),
     {
-      displayAuthor: "@not_x",
+      displayAuthor: "91吃瓜网",
       displayHandle: null,
       authorProfileUrl: null,
       authorProfilePlatform: null,

@@ -87,13 +87,35 @@ class AuthorPresentationTest(unittest.TestCase):
             },
         )
 
-    def test_unsupported_site_source_has_no_clickable_profile(self):
+    def test_site_sources_use_detail_link_for_clickable_profile(self):
+        cases = [
+            ("heiliao", "黑料", "https://among.uvsoskqus.cc/archives/1"),
+            ("cg91", "91吃瓜", "https://www.91cg1.com/post/1"),
+            ("baoliao51", "51爆料", "https://www.51baoliao01.com/archives/1"),
+            ("douyin", "抖阴", "https://xygrfrfb3g.b2h7y8w.com/v/1"),
+        ]
+
+        for source, platform, link in cases:
+            presentation = build_item_author_presentation(
+                {"source": source, "kind": "site", "value": "https://example.com"},
+                author=f"{platform}网",
+                fullname=f"{platform}网",
+                x_url=None,
+                link=link,
+            )
+
+            self.assertEqual(presentation["display_author"], f"{platform}网")
+            self.assertIsNone(presentation["display_handle"])
+            self.assertEqual(presentation["author_profile_url"], link)
+            self.assertEqual(presentation["author_profile_platform"], platform)
+
+    def test_site_sources_do_not_use_target_homepage_as_item_link(self):
         presentation = build_item_author_presentation(
             {"source": "cg91", "kind": "site", "value": "https://www.91cg1.com"},
             author="91吃瓜网",
             fullname="91吃瓜网",
             x_url=None,
-            link="https://www.91cg1.com/post/1",
+            link=None,
         )
 
         self.assertEqual(presentation["display_author"], "91吃瓜网")

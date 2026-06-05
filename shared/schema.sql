@@ -176,6 +176,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION x2_http_url(raw_value TEXT)
+RETURNS TEXT AS $$
+DECLARE
+    raw TEXT;
+BEGIN
+    raw := BTRIM(COALESCE(raw_value, ''));
+    IF raw = '' OR raw ~ '\s' THEN
+        RETURN NULL;
+    END IF;
+
+    IF raw ~* '^https?://[^[:space:]]+$' THEN
+        RETURN raw;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION x2_normalized_source(source_value TEXT)
 RETURNS TEXT AS $$
 DECLARE
@@ -259,6 +277,11 @@ BEGIN
         NEW.display_handle := NULL;
         NEW.author_profile_url := profile_url;
         NEW.author_profile_platform := CASE WHEN profile_url IS NOT NULL THEN 'YouTube' ELSE NULL END;
+    ELSIF target_source IN ('heiliao', 'cg91', 'baoliao51', 'douyin') THEN
+        profile_url := x2_http_url(NEW.link);
+        NEW.display_handle := NULL;
+        NEW.author_profile_url := profile_url;
+        NEW.author_profile_platform := CASE WHEN profile_url IS NOT NULL THEN x2_source_display_name(target_source) ELSE NULL END;
     ELSE
         NEW.display_handle := NULL;
         NEW.author_profile_url := NULL;
