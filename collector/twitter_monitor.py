@@ -2324,7 +2324,7 @@ def parse_heiliao_detail_page(detail_url: str, list_item: dict | None = None) ->
     title = (title_el.get_text(" ", strip=True) if title_el else None) or (list_item or {}).get("title") or "黑料不打烊视频"
     published_at = parse_datetime(entity.get("datePublished")) or (list_item or {}).get("published_at") or now_utc()
     modified_at = parse_datetime(entity.get("dateModified"))
-    description = entity.get("description") if isinstance(entity.get("description"), str) else ""
+    description = extract_meta_description(soup, entity) or extract_site_post_body(soup)
     image = entity.get("image") if isinstance(entity.get("image"), str) else None
     page_id = extract_heiliao_page_id(detail_url)
     content_scope = soup.select_one("article.post") or soup
@@ -2643,9 +2643,19 @@ def extract_cg91_json_ld(soup: BeautifulSoup) -> dict:
     return {}
 
 
-def clean_site_text(value: str | None) -> str:
+def clean_site_text(value: str | None, *, reject_seo: bool = True) -> str:
     text = re.sub(r"\s+", " ", value or "").strip()
-    return text.replace("|51爆料网", "").strip(" -|｜\t\r\n")
+    text = text.replace("|51爆料网", "").strip(" -|｜\t\r\n")
+    seo_markers = (
+        "持续追踪",
+        "获取最新网址",
+        "最新地址",
+        "永久地址",
+        "官方交流群",
+    )
+    if reject_seo and any(marker in text for marker in seo_markers):
+        return ""
+    return text
 
 
 def extract_meta_description(soup: BeautifulSoup, entity: dict) -> str:
@@ -2664,7 +2674,7 @@ def extract_site_post_body(soup: BeautifulSoup) -> str:
         return ""
     for removable in content_scope.select("script,style,iframe,ins,div.dplayer"):
         removable.decompose()
-    text = clean_site_text(content_scope.get_text(" ", strip=True))
+    text = clean_site_text(content_scope.get_text(" ", strip=True), reject_seo=False)
     markers = (
         "👥 官方交流群",
         "点击加入",
@@ -3622,8 +3632,15 @@ def parse_douyin_recommend_page(base_url: str, page: int, page_size: int = 10) -
     }
 
 
+def fetch_douyin_detail_item(base_url: str, video_id: str) -> dict:
+    payload = douyin_api_post(base_url, "/api/movie/detail", {"id": video_id})
+    if not isinstance(payload, dict) or not payload.get("id"):
+        raise ValueError("Douyin detail API response is missing video data.")
+    return payload
+
+
 def normalize_douyin_item(base_url: str, item: dict) -> dict | None:
-    if item.get("isAd") != "n":
+    if item.get("isAd") not in (None, "n"):
         return None
     video_id = str(item.get("id") or "").strip()
     if not video_id:
@@ -3866,14 +3883,22 @@ def refresh_douyin_playback_urls(conn, limit: int, refresh_window_minutes: int, 
             seen_ids.add(row_id)
             processed += 1
             metadata = row["metadata"] or {}
-            source_url = metadata.get("source_url") or row.get("link") or DOUYIN_DEFAULT_BASE_URL
-            links = metadata.get("douyin_play_links") or []
+            base_url = normalize_douyin_target_value(metadata.get("target_value") or DOUYIN_DEFAULT_BASE_URL)
+            video_id = metadata.get("douyin_video_id") or str(row["guid"]).replace("douyin:", "", 1)
             try:
-                if not links:
-                    raise ValueError("missing douyin_play_links")
-                item = {"source_url": source_url, "play_links": links}
+                detail_item = normalize_douyin_item(base_url, fetch_douyin_detail_item(base_url, video_id))
+                if not detail_item:
+                    raise ValueError("Douyin detail API returned no playable item.")
+                item = {"source_url": detail_item["source_url"], "play_links": detail_item["play_links"]}
                 verified = verify_douyin_video(item)
-                next_metadata = metadata | {"resolver": "douyin-encrypted-api", "resolved_at": now_iso(), "selected_link": verified.get("selected_link"), "video_url_expires_at": verified["video_url_expires_at"].isoformat()}
+                next_metadata = metadata | {
+                    "resolver": "douyin-encrypted-api",
+                    "resolved_at": now_iso(),
+                    "source_url": detail_item["source_url"],
+                    "douyin_play_links": detail_item["play_links"],
+                    "selected_link": verified.get("selected_link"),
+                    "video_url_expires_at": verified["video_url_expires_at"].isoformat(),
+                }
                 with conn.cursor() as cur:
                     cur.execute("""UPDATE items SET video_url = %s, video_url_expires_at = %s, metadata = %s, stored_at = stored_at WHERE id = %s""", (verified["video_url"], verified["video_url_expires_at"], Jsonb(next_metadata), row["id"]))
                 refreshed += 1
