@@ -65,6 +65,7 @@ DOUYIN_DEFAULT_BASE_URL = os.environ.get("DOUYIN_BASE_URL", "https://xygrfrfb3g.
 DOUYIN_RETENTION_HOURS = int(os.environ.get("DOUYIN_RETENTION_HOURS", "84"))
 DOUYIN_REQUEST_TIMEOUT_SECONDS = 30
 DOUYIN_API_SECRET = "x3t8rvtaescfe38s"
+DOUYIN_TIMEZONE = timezone(timedelta(hours=8))
 DETAIL_LINK_PROFILE_SOURCES = {
     HEILIAO_SOURCE,
     CG91_SOURCE,
@@ -3581,7 +3582,7 @@ def parse_douyin_datetime(value: str | None) -> datetime | None:
         return None
     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
         try:
-            return datetime.strptime(value.strip(), fmt).replace(tzinfo=timezone.utc)
+            return datetime.strptime(value.strip(), fmt).replace(tzinfo=DOUYIN_TIMEZONE).astimezone(timezone.utc)
         except ValueError:
             continue
     return parse_datetime(value)
