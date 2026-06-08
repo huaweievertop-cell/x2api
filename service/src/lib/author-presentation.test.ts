@@ -27,6 +27,12 @@ test("buildAuthorPresentation uses item detail links for site sources", () => {
     ["cg91", "91吃瓜", "https://www.91cg1.com/post/1"],
     ["baoliao51", "51爆料", "https://www.51baoliao01.com/archives/1"],
     ["douyin", "抖阴", "https://xygrfrfb3g.b2h7y8w.com/recommend/?id=1"],
+    ["18mh", "禁漫天堂", "https://18mh.net/mv/detail/1"],
+    ["rou", "肉視頻", "https://rou.video/v/video-1"],
+    ["dadaafa", "DadaAFA", "https://dadaafa.cc/play/1O7BBW/video?utm_source=xx"],
+    ["18j", "18J.TV", "https://18j.tv/v/37590/"],
+    ["tikporn", "Tik.Porn", "https://tik.porn/video/1529368"],
+    ["91porna", "91porna", "https://91porna.com/comic/index/detail?video_key=346951"],
   ] as const;
 
   for (const [source, platform, link] of cases) {

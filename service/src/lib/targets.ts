@@ -1,4 +1,4 @@
-export type TargetSource = "twitter" | "youtube" | "heiliao" | "cg91" | "baoliao51" | "douyin";
+export type TargetSource = "twitter" | "youtube" | "heiliao" | "cg91" | "baoliao51" | "douyin" | "18mh" | "rou" | "dadaafa" | "18j" | "tikporn" | "91porna";
 export type TargetKind = "user" | "keyword" | "channel" | "site";
 
 export type ParsedTarget = {
@@ -19,6 +19,12 @@ const HEILIAO_DEFAULT_URL = "https://among.uvsoskqus.cc";
 const CG91_DEFAULT_URL = "https://www.91cg1.com";
 const BAOLIAO51_DEFAULT_URL = "https://www.51baoliao01.com";
 const DOUYIN_DEFAULT_URL = "https://xygrfrfb3g.b2h7y8w.com";
+const MH18_DEFAULT_URL = "https://18mh.net";
+const ROU_DEFAULT_URL = "https://rou.video";
+const DADAAFA_DEFAULT_URL = "https://dadaafa.cc";
+const J18_DEFAULT_URL = "https://18j.tv";
+const TIKPORN_DEFAULT_URL = "https://tik.porn";
+const PORNA91_DEFAULT_URL = "https://91porna.com";
 
 function normalizeHeiliaoTargetValue(raw: string) {
   const value = (raw.trim() || HEILIAO_DEFAULT_URL).replace(/\/+$/, "");
@@ -96,6 +102,120 @@ function isDouyinTargetURL(raw: string) {
     }
     const url = new URL(value.includes("://") ? value : `https://${value}`);
     return url.host.toLowerCase() === new URL(DOUYIN_DEFAULT_URL).host.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+function normalize18mhTargetValue(raw: string) {
+  const value = (raw.trim() || MH18_DEFAULT_URL).replace(/\/+$/, "");
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  return `${url.protocol}//${url.host.toLowerCase()}`;
+}
+
+function is18mhTargetURL(raw: string) {
+  try {
+    const value = raw.trim();
+    if (!value) {
+      return false;
+    }
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.host.toLowerCase() === "18mh.net" || url.host.toLowerCase() === "www.18mh.net";
+  } catch {
+    return false;
+  }
+}
+
+function normalizeRouTargetValue(raw: string) {
+  const value = (raw.trim() || ROU_DEFAULT_URL).replace(/\/+$/, "");
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  return `${url.protocol}//${url.host.toLowerCase()}`;
+}
+
+function isRouTargetURL(raw: string) {
+  try {
+    const value = raw.trim();
+    if (!value) {
+      return false;
+    }
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.host.toLowerCase() === "rou.video" || url.host.toLowerCase() === "www.rou.video";
+  } catch {
+    return false;
+  }
+}
+
+function normalizeDadaAfaTargetValue(raw: string) {
+  const value = (raw.trim() || DADAAFA_DEFAULT_URL).replace(/\/+$/, "");
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  return `${url.protocol}//${url.host.toLowerCase()}`;
+}
+
+function isDadaAfaTargetURL(raw: string) {
+  try {
+    const value = raw.trim();
+    if (!value) {
+      return false;
+    }
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.host.toLowerCase() === "dadaafa.cc" || url.host.toLowerCase() === "www.dadaafa.cc";
+  } catch {
+    return false;
+  }
+}
+
+function normalize18jTargetValue(raw: string) {
+  const value = (raw.trim() || J18_DEFAULT_URL).replace(/\/+$/, "");
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  return `${url.protocol}//${url.host.toLowerCase()}`;
+}
+
+function is18jTargetURL(raw: string) {
+  try {
+    const value = raw.trim();
+    if (!value) {
+      return false;
+    }
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.host.toLowerCase() === "18j.tv" || url.host.toLowerCase() === "www.18j.tv";
+  } catch {
+    return false;
+  }
+}
+
+function normalizeTikPornTargetValue(raw: string) {
+  const value = (raw.trim() || TIKPORN_DEFAULT_URL).replace(/\/+$/, "");
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  return `${url.protocol}//${url.host.toLowerCase()}`;
+}
+
+function isTikPornTargetURL(raw: string) {
+  try {
+    const value = raw.trim();
+    if (!value) {
+      return false;
+    }
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.host.toLowerCase() === "tik.porn" || url.host.toLowerCase() === "www.tik.porn";
+  } catch {
+    return false;
+  }
+}
+
+function normalizePorna91TargetValue(raw: string) {
+  const value = (raw.trim() || PORNA91_DEFAULT_URL).replace(/\/+$/, "");
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  return `${url.protocol}//${url.host.toLowerCase()}`;
+}
+
+function isPorna91TargetURL(raw: string) {
+  try {
+    const value = raw.trim();
+    if (!value) {
+      return false;
+    }
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.host.toLowerCase() === "91porna.com" || url.host.toLowerCase() === "www.91porna.com";
   } catch {
     return false;
   }
@@ -218,6 +338,66 @@ export function parseTarget(raw: string): ParsedTarget {
     throw new Error("Target cannot be empty.");
   }
 
+  if (value.toLowerCase().startsWith("91porna:")) {
+    const normalized = normalizePorna91TargetValue(value.slice("91porna:".length));
+    return { source: "91porna", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (value.toLowerCase().startsWith("porna91:")) {
+    const normalized = normalizePorna91TargetValue(value.slice("porna91:".length));
+    return { source: "91porna", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (isPorna91TargetURL(value)) {
+    const normalized = normalizePorna91TargetValue(value);
+    return { source: "91porna", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (value.toLowerCase().startsWith("tikporn:")) {
+    const normalized = normalizeTikPornTargetValue(value.slice("tikporn:".length));
+    return { source: "tikporn", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (value.toLowerCase().startsWith("tik.porn:")) {
+    const normalized = normalizeTikPornTargetValue(value.slice("tik.porn:".length));
+    return { source: "tikporn", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (isTikPornTargetURL(value)) {
+    const normalized = normalizeTikPornTargetValue(value);
+    return { source: "tikporn", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (value.toLowerCase().startsWith("rou:")) {
+    const normalized = normalizeRouTargetValue(value.slice("rou:".length));
+    return { source: "rou", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (isRouTargetURL(value)) {
+    const normalized = normalizeRouTargetValue(value);
+    return { source: "rou", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (value.toLowerCase().startsWith("dadaafa:")) {
+    const normalized = normalizeDadaAfaTargetValue(value.slice("dadaafa:".length));
+    return { source: "dadaafa", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (isDadaAfaTargetURL(value)) {
+    const normalized = normalizeDadaAfaTargetValue(value);
+    return { source: "dadaafa", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (value.toLowerCase().startsWith("18j:")) {
+    const normalized = normalize18jTargetValue(value.slice("18j:".length));
+    return { source: "18j", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (is18jTargetURL(value)) {
+    const normalized = normalize18jTargetValue(value);
+    return { source: "18j", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
   if (value.toLowerCase().startsWith("douyin:")) {
     const normalized = normalizeDouyinTargetValue(value.slice("douyin:".length));
     return { source: "douyin", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
@@ -226,6 +406,16 @@ export function parseTarget(raw: string): ParsedTarget {
   if (isDouyinTargetURL(value)) {
     const normalized = normalizeDouyinTargetValue(value);
     return { source: "douyin", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (value.toLowerCase().startsWith("18mh:")) {
+    const normalized = normalize18mhTargetValue(value.slice("18mh:".length));
+    return { source: "18mh", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (is18mhTargetURL(value)) {
+    const normalized = normalize18mhTargetValue(value);
+    return { source: "18mh", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
   }
 
   if (value.toLowerCase().startsWith("baoliao51:")) {
@@ -328,8 +518,26 @@ export function parseTarget(raw: string): ParsedTarget {
 }
 
 export function formatTarget(target: ParsedTarget | { source?: TargetSource; kind: TargetKind; value: string }): string {
+  if (target.source === "91porna") {
+    return `91porna:${target.value}`;
+  }
+  if (target.source === "tikporn") {
+    return `tikporn:${target.value}`;
+  }
+  if (target.source === "rou") {
+    return `rou:${target.value}`;
+  }
+  if (target.source === "dadaafa") {
+    return `dadaafa:${target.value}`;
+  }
+  if (target.source === "18j") {
+    return `18j:${target.value}`;
+  }
   if (target.source === "douyin") {
     return `douyin:${target.value}`;
+  }
+  if (target.source === "18mh") {
+    return `18mh:${target.value}`;
   }
   if (target.source === "heiliao") {
     return `heiliao:${target.value}`;
@@ -429,9 +637,31 @@ function normalizeTargetSource(rawSource: unknown): TargetSource {
     case "51":
     case "baoliao51":
       return "baoliao51";
+    case "rou":
+    case "rouvideo":
+    case "rou.video":
+      return "rou";
+    case "dada":
+    case "dadaafa":
+      return "dadaafa";
+    case "18j":
+    case "18j.tv":
+    case "j18":
+      return "18j";
+    case "tik":
+    case "tikporn":
+    case "tik.porn":
+      return "tikporn";
+    case "91porna":
+    case "porna91":
+    case "91porn":
+      return "91porna";
     case "heiliao":
     case "douyin":
       return source;
+    case "18mh":
+    case "mh18":
+      return "18mh";
     default:
       throw new Error("Unsupported target source.");
   }
@@ -474,6 +704,42 @@ function normalizeTargetKind(rawKind: unknown, source: TargetSource): TargetKind
       return "site";
     }
     throw new Error("Douyin targets must use site kind.");
+  }
+  if (source === "18mh") {
+    if (kind === "site") {
+      return "site";
+    }
+    throw new Error("18mh targets must use site kind.");
+  }
+  if (source === "rou") {
+    if (kind === "site") {
+      return "site";
+    }
+    throw new Error("RouVideo targets must use site kind.");
+  }
+  if (source === "dadaafa") {
+    if (kind === "site") {
+      return "site";
+    }
+    throw new Error("DadaAFA targets must use site kind.");
+  }
+  if (source === "18j") {
+    if (kind === "site") {
+      return "site";
+    }
+    throw new Error("18j targets must use site kind.");
+  }
+  if (source === "tikporn") {
+    if (kind === "site") {
+      return "site";
+    }
+    throw new Error("Tik.Porn targets must use site kind.");
+  }
+  if (source === "91porna") {
+    if (kind === "site") {
+      return "site";
+    }
+    throw new Error("91porna targets must use site kind.");
   }
   if (kind === "user" || kind === "keyword") {
     return kind;
@@ -524,6 +790,24 @@ function parseObjectTarget(candidate: { source?: unknown; kind?: unknown; target
     parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
   } else if (source === "douyin") {
     const normalized = normalizeDouyinTargetValue(candidate.target);
+    parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  } else if (source === "18mh") {
+    const normalized = normalize18mhTargetValue(candidate.target);
+    parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  } else if (source === "rou") {
+    const normalized = normalizeRouTargetValue(candidate.target);
+    parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  } else if (source === "dadaafa") {
+    const normalized = normalizeDadaAfaTargetValue(candidate.target);
+    parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  } else if (source === "18j") {
+    const normalized = normalize18jTargetValue(candidate.target);
+    parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  } else if (source === "tikporn") {
+    const normalized = normalizeTikPornTargetValue(candidate.target);
+    parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  } else if (source === "91porna") {
+    const normalized = normalizePorna91TargetValue(candidate.target);
     parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
   } else if (explicitKind === "keyword") {
     parsed = parseTarget(candidate.target.toLowerCase().startsWith("search:") ? candidate.target : `search:${candidate.target}`);

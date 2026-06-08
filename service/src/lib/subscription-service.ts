@@ -1,12 +1,12 @@
 import { getSql } from "@/lib/db";
 import { asRows } from "@/lib/sql-result";
-import { formatTarget, parseTargets, type ParsedTarget } from "@/lib/targets";
+import { formatTarget, parseTargets, type ParsedTarget, type TargetSource } from "@/lib/targets";
 import { listVideoCategories } from "@/lib/video-feed-service";
 
 type DbSubscriptionRow = {
   subscriptionId: string;
   targetId: string;
-  source: "twitter" | "youtube" | "heiliao" | "cg91" | "baoliao51" | "douyin";
+  source: TargetSource;
   kind: "user" | "keyword" | "channel" | "site";
   value: string;
   category: string | null;
@@ -49,9 +49,9 @@ async function ensureTargets(targets: ParsedTarget[]) {
     `;
   }
 
-  const ensuredTargets: { id: string; source: "twitter" | "youtube" | "heiliao" | "cg91" | "baoliao51" | "douyin"; kind: "user" | "keyword" | "channel" | "site"; value: string; normalizedValue: string }[] = [];
+  const ensuredTargets: { id: string; source: TargetSource; kind: "user" | "keyword" | "channel" | "site"; value: string; normalizedValue: string }[] = [];
   for (const target of targets) {
-    const rows = asRows<{ id: string; source: "twitter" | "youtube" | "heiliao" | "cg91" | "baoliao51" | "douyin"; kind: "user" | "keyword" | "channel" | "site"; value: string; normalizedValue: string }>(await sql`
+    const rows = asRows<{ id: string; source: TargetSource; kind: "user" | "keyword" | "channel" | "site"; value: string; normalizedValue: string }>(await sql`
       SELECT
         id,
         source,

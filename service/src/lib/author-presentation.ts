@@ -20,6 +20,12 @@ const DETAIL_LINK_PROFILE_PLATFORMS: Record<string, string> = {
   cg91: "91吃瓜",
   baoliao51: "51爆料",
   douyin: "抖阴",
+  "18mh": "禁漫天堂",
+  rou: "肉視頻",
+  dadaafa: "DadaAFA",
+  "18j": "18J.TV",
+  tikporn: "Tik.Porn",
+  "91porna": "91porna",
 };
 
 export function buildAuthorPresentation(input: AuthorPresentationInput): AuthorPresentation {
@@ -66,6 +72,28 @@ export function normalizePresentationSource(value: string) {
     case "51":
     case "baoliao51":
       return "baoliao51";
+    case "18mh":
+    case "mh18":
+      return "18mh";
+    case "rou":
+    case "rouvideo":
+    case "rou.video":
+      return "rou";
+    case "dada":
+    case "dadaafa":
+      return "dadaafa";
+    case "18j":
+    case "18j.tv":
+    case "j18":
+      return "18j";
+    case "tik":
+    case "tikporn":
+    case "tik.porn":
+      return "tikporn";
+    case "91porna":
+    case "porna91":
+    case "91porn":
+      return "91porna";
     default:
       return source;
   }
@@ -109,6 +137,18 @@ function sourceDisplayName(source: string) {
       return "51爆料";
     case "douyin":
       return "抖阴";
+    case "18mh":
+      return "禁漫天堂";
+    case "rou":
+      return "肉視頻";
+    case "dadaafa":
+      return "DadaAFA";
+    case "18j":
+      return "18J.TV";
+    case "tikporn":
+      return "Tik.Porn";
+    case "91porna":
+      return "91porna";
     default:
       return source || "X";
   }

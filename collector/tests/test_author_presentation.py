@@ -8,9 +8,13 @@ from collector.twitter_monitor import (
     build_item_author_presentation,
     insert_items,
     normalize_douyin_item,
+    parse_target_value,
+    upsert_18j_video_item,
     upsert_baoliao51_video_item,
     upsert_cg91_video_item,
+    upsert_dadaafa_video_item,
     upsert_douyin_video_item,
+    upsert_18mh_video_item,
     upsert_heiliao_video_item,
     upsert_resolved_youtube_item,
 )
@@ -94,6 +98,12 @@ class AuthorPresentationTest(unittest.TestCase):
             ("cg91", "91吃瓜", "https://www.91cg1.com/post/1"),
             ("baoliao51", "51爆料", "https://www.51baoliao01.com/archives/1"),
             ("douyin", "抖阴", "https://xygrfrfb3g.b2h7y8w.com/recommend/?id=1"),
+            ("18mh", "禁漫天堂", "https://18mh.net/mv/detail/1"),
+            ("rou", "肉視頻", "https://rou.video/v/video-1"),
+            ("dadaafa", "DadaAFA", "https://dadaafa.cc/play/1O7BBW/video?utm_source=xx"),
+            ("18j", "18J.TV", "https://18j.tv/v/37590/"),
+            ("tikporn", "Tik.Porn", "https://tik.porn/video/1529368"),
+            ("91porna", "91porna", "https://91porna.com/comic/index/detail?video_key=346951"),
         ]
 
         for source, platform, link in cases:
@@ -109,6 +119,72 @@ class AuthorPresentationTest(unittest.TestCase):
             self.assertIsNone(presentation["display_handle"])
             self.assertEqual(presentation["author_profile_url"], link)
             self.assertEqual(presentation["author_profile_platform"], platform)
+
+    def test_parse_target_value_accepts_18mh_url(self):
+        self.assertEqual(
+            parse_target_value("https://18mh.net/mv/all"),
+            {
+                "source": "18mh",
+                "kind": "site",
+                "value": "https://18mh.net",
+                "normalized_value": "18mh.net",
+            },
+        )
+
+    def test_parse_target_value_accepts_rou_url(self):
+        self.assertEqual(
+            parse_target_value("https://rou.video/v"),
+            {
+                "source": "rou",
+                "kind": "site",
+                "value": "https://rou.video",
+                "normalized_value": "rou.video",
+            },
+        )
+
+    def test_parse_target_value_accepts_dadaafa_url(self):
+        self.assertEqual(
+            parse_target_value("https://dadaafa.cc/?utm_source=xx&tab=new"),
+            {
+                "source": "dadaafa",
+                "kind": "site",
+                "value": "https://dadaafa.cc",
+                "normalized_value": "dadaafa.cc",
+            },
+        )
+
+    def test_parse_target_value_accepts_tikporn_url(self):
+        self.assertEqual(
+            parse_target_value("https://tik.porn/"),
+            {
+                "source": "tikporn",
+                "kind": "site",
+                "value": "https://tik.porn",
+                "normalized_value": "tik.porn",
+            },
+        )
+
+    def test_parse_target_value_accepts_18j_url(self):
+        self.assertEqual(
+            parse_target_value("https://18j.tv/show/1/"),
+            {
+                "source": "18j",
+                "kind": "site",
+                "value": "https://18j.tv",
+                "normalized_value": "18j.tv",
+            },
+        )
+
+    def test_parse_target_value_accepts_91porna_url(self):
+        self.assertEqual(
+            parse_target_value("https://91porna.com/comic/index/video?category=new_update"),
+            {
+                "source": "91porna",
+                "kind": "site",
+                "value": "https://91porna.com",
+                "normalized_value": "91porna.com",
+            },
+        )
 
     def test_site_sources_do_not_use_target_homepage_as_item_link(self):
         presentation = build_item_author_presentation(
@@ -159,6 +235,11 @@ class AuthorPresentationTest(unittest.TestCase):
             "image": "https://static.example/image.jpg",
             "published_at": now,
             "modified_at": now,
+            "duration": 120,
+            "view_count": 10,
+            "created_at_label": "1小时前",
+            "category": "视频",
+            "tags": ["视频"],
             "players": [{"video_id": "video-1"}],
         }
         player = {
@@ -222,6 +303,9 @@ class AuthorPresentationTest(unittest.TestCase):
         self.assertTrue(upsert_heiliao_video_item(conn, {"id": "target-id", "source": "heiliao", "kind": "site", "value": "https://among.uvsoskqus.cc"}, detail, player, verified, 84))
         self.assertTrue(upsert_cg91_video_item(conn, {"id": "target-id", "source": "cg91", "kind": "site", "value": "https://www.91cg1.com"}, detail, player, verified, 84))
         self.assertTrue(upsert_baoliao51_video_item(conn, {"id": "target-id", "source": "baoliao51", "kind": "site", "value": "https://www.51baoliao01.com"}, detail, player, verified, 84))
+        self.assertTrue(upsert_18mh_video_item(conn, {"id": "target-id", "source": "18mh", "kind": "site", "value": "https://18mh.net"}, detail, player | {"guid": "18mh:1"}, verified, 84))
+        self.assertTrue(upsert_dadaafa_video_item(conn, {"id": "target-id", "source": "dadaafa", "kind": "site", "value": "https://dadaafa.cc"}, detail | {"video_id": "1"}, player | {"guid": "dadaafa:1"}, verified, 84))
+        self.assertTrue(upsert_18j_video_item(conn, {"id": "target-id", "source": "18j", "kind": "site", "value": "https://18j.tv"}, detail | {"video_id": "1"}, player | {"guid": "18j:1"}, verified, 84))
         self.assertTrue(
             upsert_douyin_video_item(
                 conn,

@@ -1,0 +1,56 @@
+name: Tik.Porn Monitor
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: x2ding-tikporn-monitor
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '25 * * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Tik.Porn 站点入口'
+        required: false
+        default: 'https://tik.porn'
+      max_pages:
+        description: '兼容参数；Tik.Porn 最新接口当前固定返回最新一页'
+        required: false
+        default: '1'
+
+jobs:
+  monitor-tikporn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: collector/requirements.txt
+
+      - name: Install dependencies
+        working-directory: collector
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Tik.Porn monitor
+        working-directory: collector
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BASE_URL: ${{ inputs.base_url || vars.TIKPORN_BASE_URL || 'https://tik.porn' }}
+          MAX_PAGES: ${{ inputs.max_pages || vars.TIKPORN_MONITOR_MAX_PAGES || '1' }}
+        run: |
+          python twitter_monitor.py monitor-tikporn \
+            --base-url "${BASE_URL}" \
+            --max-pages "${MAX_PAGES}" \
+            --retention-hours 84

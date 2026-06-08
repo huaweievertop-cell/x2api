@@ -2,6 +2,7 @@ import { getSql } from "@/lib/db";
 import { buildCursorPage, decodeCursor, normalizeLimit } from "@/lib/pagination";
 import { asRows } from "@/lib/sql-result";
 import { resolveAuthorPresentation, type AuthorPresentation } from "@/lib/author-presentation";
+import type { TargetSource } from "@/lib/targets";
 
 type ItemQuery = {
   clientId: string;
@@ -29,7 +30,7 @@ type ItemRecordBase = {
   id: string;
   target: string;
   targetLink: string | null;
-  source: "twitter" | "youtube" | "heiliao" | "cg91" | "baoliao51" | "douyin";
+  source: TargetSource;
   kind: "user" | "keyword" | "channel" | "site";
   category: string | null;
   isSensitive: boolean;
@@ -126,7 +127,7 @@ export async function listItems(query: ItemQuery): Promise<ListItemsResult> {
         i.expires_at > NOW()
       )
       AND (
-        t.source NOT IN ('youtube', 'heiliao', 'cg91', 'baoliao51', 'douyin')
+        t.source NOT IN ('youtube', 'heiliao', 'cg91', 'baoliao51', 'douyin', '18mh', 'rou', 'dadaafa', '18j', 'tikporn', '91porna')
         OR i.video_url_expires_at > NOW() + INTERVAL '10 minutes'
       )
       AND (
@@ -145,11 +146,17 @@ export async function listItems(query: ItemQuery): Promise<ListItemsResult> {
             WHEN t.source = 'cg91' THEN 'cg91:' || t.value
             WHEN t.source = 'baoliao51' THEN 'baoliao51:' || t.value
             WHEN t.source = 'douyin' THEN 'douyin:' || t.value
+            WHEN t.source = '18mh' THEN '18mh:' || t.value
+            WHEN t.source = 'dadaafa' THEN 'dadaafa:' || t.value
+            WHEN t.source = '18j' THEN '18j:' || t.value
+            WHEN t.source = 'tikporn' THEN 'tikporn:' || t.value
+            WHEN t.source = '91porna' THEN '91porna:' || t.value
+            WHEN t.source = 'rou' THEN 'rou:' || t.value
             WHEN t.kind = 'keyword' THEN 'search:' || t.value
             ELSE t.value
           END
         ) = ${targetFilter}
-        OR (t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin') AND LOWER(t.source) = ${targetFilter})
+        OR (t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin', '18mh', 'rou', 'dadaafa', '18j', 'tikporn', '91porna') AND LOWER(t.source) = ${targetFilter})
       )
       AND (
         ${sinceFilter}::timestamptz IS NULL
@@ -233,12 +240,12 @@ export async function listItems(query: ItemQuery): Promise<ListItemsResult> {
       i.id,
       CASE
         WHEN t.source = 'youtube' THEN 'youtube:' || t.value
-        WHEN t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin') THEN t.source
+        WHEN t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin', '18mh', 'rou', 'dadaafa', '18j', 'tikporn', '91porna') THEN t.source
         WHEN t.kind = 'keyword' THEN 'search:' || t.value
         ELSE t.value
       END AS target,
       CASE
-        WHEN t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin') THEN t.value
+        WHEN t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin', '18mh', 'rou', 'dadaafa', '18j', 'tikporn', '91porna') THEN t.value
         WHEN t.source = 'youtube' THEN 'https://www.youtube.com/channel/' || t.value
         WHEN t.source = 'twitter' AND t.kind = 'user' THEN 'https://x.com/' || t.value
         ELSE NULL
@@ -323,12 +330,12 @@ export async function listItemsByFeedToken(feedToken: string, limit = 50) {
         i.id,
         CASE
           WHEN t.source = 'youtube' THEN 'youtube:' || t.value
-          WHEN t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin') THEN t.source
+          WHEN t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin', '18mh', 'rou', 'dadaafa', '18j', 'tikporn', '91porna') THEN t.source
           WHEN t.kind = 'keyword' THEN 'search:' || t.value
           ELSE t.value
         END AS target,
         CASE
-          WHEN t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin') THEN t.value
+          WHEN t.source IN ('heiliao', 'cg91', 'baoliao51', 'douyin', '18mh', 'rou', 'dadaafa', '18j', 'tikporn', '91porna') THEN t.value
           WHEN t.source = 'youtube' THEN 'https://www.youtube.com/channel/' || t.value
           WHEN t.source = 'twitter' AND t.kind = 'user' THEN 'https://x.com/' || t.value
           ELSE NULL
@@ -386,7 +393,7 @@ export async function listItemsByFeedToken(feedToken: string, limit = 50) {
         AND c.status = 'active'
         AND i.expires_at > NOW()
         AND (
-          t.source NOT IN ('youtube', 'heiliao', 'cg91', 'baoliao51', 'douyin')
+          t.source NOT IN ('youtube', 'heiliao', 'cg91', 'baoliao51', 'douyin', '18mh', 'rou', 'dadaafa', '18j', 'tikporn', '91porna')
           OR i.video_url_expires_at > NOW() + INTERVAL '10 minutes'
         )
     ),

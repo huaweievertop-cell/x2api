@@ -1,0 +1,56 @@
+name: DadaAFA Video Monitor
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: x2ding-dadaafa-monitor
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '45 * * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'DadaAFA 站点入口'
+        required: false
+        default: 'https://dadaafa.cc/?utm_source=xx&tab=new'
+      max_pages:
+        description: '单次最多分页数'
+        required: false
+        default: '2'
+
+jobs:
+  monitor-dadaafa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: collector/requirements.txt
+
+      - name: Install dependencies
+        working-directory: collector
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run DadaAFA monitor
+        working-directory: collector
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BASE_URL: ${{ inputs.base_url || vars.DADAAFA_BASE_URL || 'https://dadaafa.cc/?utm_source=xx&tab=new' }}
+          MAX_PAGES: ${{ inputs.max_pages || vars.DADAAFA_MONITOR_MAX_PAGES || '2' }}
+        run: |
+          python twitter_monitor.py monitor-dadaafa \
+            --base-url "${BASE_URL}" \
+            --max-pages "${MAX_PAGES}" \
+            --retention-hours 84

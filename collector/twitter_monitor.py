@@ -25,6 +25,171 @@ from psycopg import connect
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
+try:
+    from collector.dadaafa_source import (
+        DADAAFA_CRITICAL_WINDOW_MINUTES,
+        DADAAFA_DEFAULT_BASE_URL,
+        DADAAFA_KIND,
+        DADAAFA_REFRESH_WINDOW_MINUTES,
+        DADAAFA_RETENTION_HOURS,
+        DADAAFA_SITE_NAME,
+        DADAAFA_SOURCE,
+        is_dadaafa_target_url,
+        monitor_site as monitor_dadaafa_site,
+        normalize_dadaafa_target_value,
+        refresh_playback_urls as refresh_dadaafa_playback_urls,
+        upsert_video_item as upsert_dadaafa_video_item,
+    )
+    from collector.j18_source import (
+        J18_CRITICAL_WINDOW_MINUTES,
+        J18_DEFAULT_BASE_URL,
+        J18_KIND,
+        J18_REFRESH_WINDOW_MINUTES,
+        J18_RETENTION_HOURS,
+        J18_SITE_NAME,
+        J18_SOURCE,
+        is_18j_target_url,
+        monitor_site as monitor_18j_site,
+        normalize_18j_target_value,
+        refresh_playback_urls as refresh_18j_playback_urls,
+        upsert_video_item as upsert_18j_video_item,
+    )
+    from collector.mh18_source import (
+        MH18_DEFAULT_BASE_URL,
+        MH18_CRITICAL_WINDOW_MINUTES,
+        MH18_KIND,
+        MH18_REFRESH_WINDOW_MINUTES,
+        MH18_RETENTION_HOURS,
+        MH18_SITE_NAME,
+        MH18_SOURCE,
+        is_18mh_target_url,
+        monitor_site as monitor_18mh_site,
+        normalize_18mh_target_value,
+        refresh_playback_urls as refresh_18mh_playback_urls,
+        upsert_video_item as upsert_18mh_video_item,
+    )
+    from collector.porna91_source import (
+        PORNA91_CRITICAL_WINDOW_MINUTES,
+        PORNA91_DEFAULT_BASE_URL,
+        PORNA91_KIND,
+        PORNA91_REFRESH_WINDOW_MINUTES,
+        PORNA91_RETENTION_HOURS,
+        PORNA91_SITE_NAME,
+        PORNA91_SOURCE,
+        is_porna91_target_url,
+        monitor_site as monitor_porna91_site,
+        normalize_porna91_target_value,
+        refresh_playback_urls as refresh_porna91_playback_urls,
+    )
+    from collector.rou_source import (
+        ROU_CRITICAL_WINDOW_MINUTES,
+        ROU_DEFAULT_BASE_URL,
+        ROU_KIND,
+        ROU_REFRESH_WINDOW_MINUTES,
+        ROU_RETENTION_HOURS,
+        ROU_SITE_NAME,
+        ROU_SOURCE,
+        is_rou_target_url,
+        monitor_site as monitor_rou_site,
+        normalize_rou_target_value,
+        refresh_playback_urls as refresh_rou_playback_urls,
+    )
+    from collector.tikporn_refresh import refresh_playback_urls as refresh_tikporn_playback_urls
+    from collector.tikporn_source import (
+        TIKPORN_CRITICAL_WINDOW_MINUTES,
+        TIKPORN_DEFAULT_BASE_URL,
+        TIKPORN_KIND,
+        TIKPORN_REFRESH_WINDOW_MINUTES,
+        TIKPORN_RETENTION_HOURS,
+        TIKPORN_SITE_NAME,
+        TIKPORN_SOURCE,
+        is_tikporn_target_url,
+        monitor_site as monitor_tikporn_site,
+        normalize_tikporn_target_value,
+    )
+except ModuleNotFoundError:
+    from dadaafa_source import (
+        DADAAFA_CRITICAL_WINDOW_MINUTES,
+        DADAAFA_DEFAULT_BASE_URL,
+        DADAAFA_KIND,
+        DADAAFA_REFRESH_WINDOW_MINUTES,
+        DADAAFA_RETENTION_HOURS,
+        DADAAFA_SITE_NAME,
+        DADAAFA_SOURCE,
+        is_dadaafa_target_url,
+        monitor_site as monitor_dadaafa_site,
+        normalize_dadaafa_target_value,
+        refresh_playback_urls as refresh_dadaafa_playback_urls,
+        upsert_video_item as upsert_dadaafa_video_item,
+    )
+    from j18_source import (
+        J18_CRITICAL_WINDOW_MINUTES,
+        J18_DEFAULT_BASE_URL,
+        J18_KIND,
+        J18_REFRESH_WINDOW_MINUTES,
+        J18_RETENTION_HOURS,
+        J18_SITE_NAME,
+        J18_SOURCE,
+        is_18j_target_url,
+        monitor_site as monitor_18j_site,
+        normalize_18j_target_value,
+        refresh_playback_urls as refresh_18j_playback_urls,
+        upsert_video_item as upsert_18j_video_item,
+    )
+    from mh18_source import (
+        MH18_DEFAULT_BASE_URL,
+        MH18_CRITICAL_WINDOW_MINUTES,
+        MH18_KIND,
+        MH18_REFRESH_WINDOW_MINUTES,
+        MH18_RETENTION_HOURS,
+        MH18_SITE_NAME,
+        MH18_SOURCE,
+        is_18mh_target_url,
+        monitor_site as monitor_18mh_site,
+        normalize_18mh_target_value,
+        refresh_playback_urls as refresh_18mh_playback_urls,
+        upsert_video_item as upsert_18mh_video_item,
+    )
+    from porna91_source import (
+        PORNA91_CRITICAL_WINDOW_MINUTES,
+        PORNA91_DEFAULT_BASE_URL,
+        PORNA91_KIND,
+        PORNA91_REFRESH_WINDOW_MINUTES,
+        PORNA91_RETENTION_HOURS,
+        PORNA91_SITE_NAME,
+        PORNA91_SOURCE,
+        is_porna91_target_url,
+        monitor_site as monitor_porna91_site,
+        normalize_porna91_target_value,
+        refresh_playback_urls as refresh_porna91_playback_urls,
+    )
+    from rou_source import (
+        ROU_CRITICAL_WINDOW_MINUTES,
+        ROU_DEFAULT_BASE_URL,
+        ROU_KIND,
+        ROU_REFRESH_WINDOW_MINUTES,
+        ROU_RETENTION_HOURS,
+        ROU_SITE_NAME,
+        ROU_SOURCE,
+        is_rou_target_url,
+        monitor_site as monitor_rou_site,
+        normalize_rou_target_value,
+        refresh_playback_urls as refresh_rou_playback_urls,
+    )
+    from tikporn_refresh import refresh_playback_urls as refresh_tikporn_playback_urls
+    from tikporn_source import (
+        TIKPORN_CRITICAL_WINDOW_MINUTES,
+        TIKPORN_DEFAULT_BASE_URL,
+        TIKPORN_KIND,
+        TIKPORN_REFRESH_WINDOW_MINUTES,
+        TIKPORN_RETENTION_HOURS,
+        TIKPORN_SITE_NAME,
+        TIKPORN_SOURCE,
+        is_tikporn_target_url,
+        monitor_site as monitor_tikporn_site,
+        normalize_tikporn_target_value,
+    )
+
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
@@ -72,6 +237,12 @@ DETAIL_LINK_PROFILE_SOURCES = {
     CG91_SOURCE,
     BAOLIAO51_SOURCE,
     DOUYIN_SOURCE,
+    MH18_SOURCE,
+    ROU_SOURCE,
+    DADAAFA_SOURCE,
+    TIKPORN_SOURCE,
+    PORNA91_SOURCE,
+    J18_SOURCE,
 }
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -180,6 +351,54 @@ def parse_targets(raw: str | list[str] | None) -> list[str]:
 
 def parse_target_value(target: str) -> dict[str, str]:
     normalized = normalize_target(target)
+    if normalized.lower().startswith("91porna:"):
+        value = normalize_porna91_target_value(normalized[len("91porna:") :].strip())
+        return {"source": PORNA91_SOURCE, "kind": PORNA91_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if normalized.lower().startswith("porna91:"):
+        value = normalize_porna91_target_value(normalized[len("porna91:") :].strip())
+        return {"source": PORNA91_SOURCE, "kind": PORNA91_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if is_porna91_target_url(normalized):
+        value = normalize_porna91_target_value(normalized)
+        return {"source": PORNA91_SOURCE, "kind": PORNA91_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if normalized.lower().startswith("tikporn:"):
+        value = normalize_tikporn_target_value(normalized[len("tikporn:") :].strip())
+        return {"source": TIKPORN_SOURCE, "kind": TIKPORN_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if normalized.lower().startswith("tik.porn:"):
+        value = normalize_tikporn_target_value(normalized[len("tik.porn:") :].strip())
+        return {"source": TIKPORN_SOURCE, "kind": TIKPORN_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if is_tikporn_target_url(normalized):
+        value = normalize_tikporn_target_value(normalized)
+        return {"source": TIKPORN_SOURCE, "kind": TIKPORN_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if normalized.lower().startswith("rou:"):
+        value = normalize_rou_target_value(normalized[len("rou:") :].strip())
+        return {"source": ROU_SOURCE, "kind": ROU_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if is_rou_target_url(normalized):
+        value = normalize_rou_target_value(normalized)
+        return {"source": ROU_SOURCE, "kind": ROU_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if normalized.lower().startswith("dadaafa:"):
+        value = normalize_dadaafa_target_value(normalized[len("dadaafa:") :].strip())
+        return {"source": DADAAFA_SOURCE, "kind": DADAAFA_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if is_dadaafa_target_url(normalized):
+        value = normalize_dadaafa_target_value(normalized)
+        return {"source": DADAAFA_SOURCE, "kind": DADAAFA_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if normalized.lower().startswith("18j:"):
+        value = normalize_18j_target_value(normalized[len("18j:") :].strip())
+        return {"source": J18_SOURCE, "kind": J18_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if is_18j_target_url(normalized):
+        value = normalize_18j_target_value(normalized)
+        return {"source": J18_SOURCE, "kind": J18_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
     if normalized.lower().startswith("douyin:"):
         value = normalize_douyin_target_value(normalized[len("douyin:") :].strip())
         return {"source": DOUYIN_SOURCE, "kind": DOUYIN_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
@@ -187,6 +406,14 @@ def parse_target_value(target: str) -> dict[str, str]:
     if is_douyin_target_url(normalized):
         value = normalize_douyin_target_value(normalized)
         return {"source": DOUYIN_SOURCE, "kind": DOUYIN_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if normalized.lower().startswith("18mh:"):
+        value = normalize_18mh_target_value(normalized[len("18mh:") :].strip())
+        return {"source": MH18_SOURCE, "kind": MH18_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if is_18mh_target_url(normalized):
+        value = normalize_18mh_target_value(normalized)
+        return {"source": MH18_SOURCE, "kind": MH18_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
 
     if normalized.lower().startswith("baoliao51:"):
         value = normalize_baoliao51_target_value(normalized[len("baoliao51:") :].strip())
@@ -277,8 +504,20 @@ def format_target(kind: str, value: str) -> str:
 
 
 def format_target_row(target_row: dict) -> str:
+    if target_row.get("source") == PORNA91_SOURCE:
+        return f"91porna:{target_row['value']}"
+    if target_row.get("source") == TIKPORN_SOURCE:
+        return f"tikporn:{target_row['value']}"
+    if target_row.get("source") == ROU_SOURCE:
+        return f"rou:{target_row['value']}"
+    if target_row.get("source") == DADAAFA_SOURCE:
+        return f"dadaafa:{target_row['value']}"
+    if target_row.get("source") == J18_SOURCE:
+        return f"18j:{target_row['value']}"
     if target_row.get("source") == DOUYIN_SOURCE:
         return f"douyin:{target_row['value']}"
+    if target_row.get("source") == MH18_SOURCE:
+        return f"18mh:{target_row['value']}"
     if target_row.get("source") == BAOLIAO51_SOURCE:
         return f"baoliao51:{target_row['value']}"
     if target_row.get("source") == CG91_SOURCE:
@@ -305,6 +544,18 @@ def normalized_presentation_source(source: str | None) -> str:
         return CG91_SOURCE
     if source_key in {"51", "baoliao51"}:
         return BAOLIAO51_SOURCE
+    if source_key in {"18mh", "mh18"}:
+        return MH18_SOURCE
+    if source_key in {"rou", "rouvideo", "rou.video"}:
+        return ROU_SOURCE
+    if source_key in {"dadaafa", "dada", "dadaafa.cc"}:
+        return DADAAFA_SOURCE
+    if source_key in {"18j", "18j.tv", "j18"}:
+        return J18_SOURCE
+    if source_key in {"tikporn", "tik", "tik.porn"}:
+        return TIKPORN_SOURCE
+    if source_key in {"91porna", "porna91", "91porn", "91porna.com"}:
+        return PORNA91_SOURCE
     return source_key
 
 
@@ -317,6 +568,12 @@ def source_display_name(source: str | None) -> str:
         CG91_SOURCE: "91吃瓜",
         BAOLIAO51_SOURCE: "51爆料",
         DOUYIN_SOURCE: "抖阴",
+        MH18_SOURCE: MH18_SITE_NAME,
+        ROU_SOURCE: ROU_SITE_NAME,
+        DADAAFA_SOURCE: DADAAFA_SITE_NAME,
+        J18_SOURCE: J18_SITE_NAME,
+        TIKPORN_SOURCE: TIKPORN_SITE_NAME,
+        PORNA91_SOURCE: PORNA91_SITE_NAME,
     }.get(source_key, source_key or "X")
 
 
@@ -3295,7 +3552,7 @@ def cleanup_records(conn, retention_days: int, max_records: int) -> dict[str, in
             DELETE FROM items i
             USING targets t
             WHERE t.id = i.target_id
-              AND t.source IN ('youtube', 'heiliao', 'cg91', 'baoliao51')
+              AND t.source IN ('youtube', 'heiliao', 'cg91', 'baoliao51', 'douyin', '18mh', 'rou', 'dadaafa', '91porna', '18j')
               AND i.expires_at <= NOW()
             """
         )
@@ -3430,6 +3687,14 @@ def query_records(
                 OR LOWER(CASE
                     WHEN t.source = 'youtube' THEN 'youtube:' || t.value
                     WHEN t.source = 'heiliao' THEN 'heiliao:' || t.value
+                    WHEN t.source = 'cg91' THEN 'cg91:' || t.value
+                    WHEN t.source = 'baoliao51' THEN 'baoliao51:' || t.value
+                    WHEN t.source = 'douyin' THEN 'douyin:' || t.value
+                    WHEN t.source = '18mh' THEN '18mh:' || t.value
+                    WHEN t.source = 'rou' THEN 'rou:' || t.value
+                    WHEN t.source = 'dadaafa' THEN 'dadaafa:' || t.value
+                    WHEN t.source = '91porna' THEN '91porna:' || t.value
+                    WHEN t.source = '18j' THEN '18j:' || t.value
                     WHEN t.kind = 'keyword' THEN 'search:' || t.value
                     ELSE t.value
                 END) = %s
@@ -4288,6 +4553,198 @@ def command_refresh_douyin_playback_urls(args) -> int:
     return 0
 
 
+def command_monitor_18mh(args) -> int:
+    base_url = args.base_url or MH18_DEFAULT_BASE_URL
+    retention_hours = args.retention_hours if args.retention_hours is not None else MH18_RETENTION_HOURS
+    if args.retention_days is not None:
+        retention_hours = args.retention_days * 24
+    max_records = args.max_records if args.max_records is not None else DEFAULT_MAX_RECORDS
+    if args.dry_run and not DATABASE_URL:
+        stats = monitor_18mh_site(None, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=True)
+        print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+        return 0
+    with get_db_connection() as conn:
+        stats = monitor_18mh_site(conn, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=args.dry_run)
+        if args.dry_run:
+            conn.rollback()
+        else:
+            conn.commit()
+        if not args.skip_cleanup and not args.dry_run:
+            cleanup_stats = cleanup_records(conn, max(1, (retention_hours + 23) // 24), max_records)
+            conn.commit()
+            stats = {**stats, "cleanup": cleanup_stats}
+    print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_refresh_18mh_playback_urls(args) -> int:
+    with get_db_connection() as conn:
+        stats = refresh_18mh_playback_urls(conn, limit=max(1, args.limit), refresh_window_minutes=max(1, args.refresh_window_minutes), critical_window_minutes=max(1, args.critical_window_minutes))
+        conn.commit()
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
+def command_monitor_rou(args) -> int:
+    base_url = args.base_url or ROU_DEFAULT_BASE_URL
+    retention_hours = args.retention_hours if args.retention_hours is not None else ROU_RETENTION_HOURS
+    if args.retention_days is not None:
+        retention_hours = args.retention_days * 24
+    max_records = args.max_records if args.max_records is not None else DEFAULT_MAX_RECORDS
+    if args.dry_run and not DATABASE_URL:
+        stats = monitor_rou_site(None, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=True)
+        print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+        return 0
+    with get_db_connection() as conn:
+        stats = monitor_rou_site(conn, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=args.dry_run)
+        if args.dry_run:
+            conn.rollback()
+        else:
+            conn.commit()
+        if not args.skip_cleanup and not args.dry_run:
+            cleanup_stats = cleanup_records(conn, max(1, (retention_hours + 23) // 24), max_records)
+            conn.commit()
+            stats = {**stats, "cleanup": cleanup_stats}
+    print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_refresh_rou_playback_urls(args) -> int:
+    with get_db_connection() as conn:
+        stats = refresh_rou_playback_urls(conn, limit=max(1, args.limit), refresh_window_minutes=max(1, args.refresh_window_minutes), critical_window_minutes=max(1, args.critical_window_minutes))
+        conn.commit()
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
+def command_monitor_dadaafa(args) -> int:
+    base_url = args.base_url or DADAAFA_DEFAULT_BASE_URL
+    retention_hours = args.retention_hours if args.retention_hours is not None else DADAAFA_RETENTION_HOURS
+    if args.retention_days is not None:
+        retention_hours = args.retention_days * 24
+    max_records = args.max_records if args.max_records is not None else DEFAULT_MAX_RECORDS
+    if args.dry_run and not DATABASE_URL:
+        stats = monitor_dadaafa_site(None, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=True)
+        print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+        return 0
+    with get_db_connection() as conn:
+        stats = monitor_dadaafa_site(conn, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=args.dry_run)
+        if args.dry_run:
+            conn.rollback()
+        else:
+            conn.commit()
+        if not args.skip_cleanup and not args.dry_run:
+            cleanup_stats = cleanup_records(conn, max(1, (retention_hours + 23) // 24), max_records)
+            conn.commit()
+            stats = {**stats, "cleanup": cleanup_stats}
+    print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_refresh_dadaafa_playback_urls(args) -> int:
+    with get_db_connection() as conn:
+        stats = refresh_dadaafa_playback_urls(conn, limit=max(1, args.limit), refresh_window_minutes=max(1, args.refresh_window_minutes), critical_window_minutes=max(1, args.critical_window_minutes))
+        conn.commit()
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
+def command_monitor_18j(args) -> int:
+    base_url = args.base_url or J18_DEFAULT_BASE_URL
+    retention_hours = args.retention_hours if args.retention_hours is not None else J18_RETENTION_HOURS
+    if args.retention_days is not None:
+        retention_hours = args.retention_days * 24
+    max_records = args.max_records if args.max_records is not None else DEFAULT_MAX_RECORDS
+    if args.dry_run and not DATABASE_URL:
+        stats = monitor_18j_site(None, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=True)
+        print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+        return 0
+    with get_db_connection() as conn:
+        stats = monitor_18j_site(conn, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=args.dry_run)
+        if args.dry_run:
+            conn.rollback()
+        else:
+            conn.commit()
+        if not args.skip_cleanup and not args.dry_run:
+            cleanup_stats = cleanup_records(conn, max(1, (retention_hours + 23) // 24), max_records)
+            conn.commit()
+            stats = {**stats, "cleanup": cleanup_stats}
+    print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_refresh_18j_playback_urls(args) -> int:
+    with get_db_connection() as conn:
+        stats = refresh_18j_playback_urls(conn, limit=max(1, args.limit), refresh_window_minutes=max(1, args.refresh_window_minutes), critical_window_minutes=max(1, args.critical_window_minutes))
+        conn.commit()
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
+def command_monitor_91porna(args) -> int:
+    base_url = args.base_url or PORNA91_DEFAULT_BASE_URL
+    retention_hours = args.retention_hours if args.retention_hours is not None else PORNA91_RETENTION_HOURS
+    if args.retention_days is not None:
+        retention_hours = args.retention_days * 24
+    max_records = args.max_records if args.max_records is not None else DEFAULT_MAX_RECORDS
+    if args.dry_run and not DATABASE_URL:
+        stats = monitor_porna91_site(None, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=True)
+        print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+        return 0
+    with get_db_connection() as conn:
+        stats = monitor_porna91_site(conn, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=args.dry_run)
+        if args.dry_run:
+            conn.rollback()
+        else:
+            conn.commit()
+        if not args.skip_cleanup and not args.dry_run:
+            cleanup_stats = cleanup_records(conn, max(1, (retention_hours + 23) // 24), max_records)
+            conn.commit()
+            stats = {**stats, "cleanup": cleanup_stats}
+    print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_refresh_91porna_playback_urls(args) -> int:
+    with get_db_connection() as conn:
+        stats = refresh_porna91_playback_urls(conn, limit=max(1, args.limit), refresh_window_minutes=max(1, args.refresh_window_minutes), critical_window_minutes=max(1, args.critical_window_minutes))
+        conn.commit()
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
+def command_monitor_tikporn(args) -> int:
+    base_url = args.base_url or TIKPORN_DEFAULT_BASE_URL
+    retention_hours = args.retention_hours if args.retention_hours is not None else TIKPORN_RETENTION_HOURS
+    if args.retention_days is not None:
+        retention_hours = args.retention_days * 24
+    max_records = args.max_records if args.max_records is not None else DEFAULT_MAX_RECORDS
+    if args.dry_run and not DATABASE_URL:
+        stats = monitor_tikporn_site(None, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=True)
+        print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+        return 0
+    with get_db_connection() as conn:
+        stats = monitor_tikporn_site(conn, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=args.dry_run)
+        if args.dry_run:
+            conn.rollback()
+        else:
+            conn.commit()
+        if not args.skip_cleanup and not args.dry_run:
+            cleanup_stats = cleanup_records(conn, max(1, (retention_hours + 23) // 24), max_records)
+            conn.commit()
+            stats = {**stats, "cleanup": cleanup_stats}
+    print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_refresh_tikporn_playback_urls(args) -> int:
+    with get_db_connection() as conn:
+        stats = refresh_tikporn_playback_urls(conn, limit=max(1, args.limit), refresh_window_minutes=max(1, args.refresh_window_minutes), critical_window_minutes=max(1, args.critical_window_minutes))
+        conn.commit()
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
 def command_seed_system_targets(args) -> int:
     target_configs = parse_system_targets_file(args.file)
     with get_db_connection() as conn:
@@ -4369,6 +4826,72 @@ def build_parser() -> argparse.ArgumentParser:
     douyin_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
     douyin_monitor_parser.set_defaults(func=command_monitor_douyin)
 
+    mh18_monitor_parser = subparsers.add_parser("monitor-18mh", help="单独抓取 18mh/禁漫天堂视频并入库")
+    mh18_monitor_parser.add_argument("--base-url", default=MH18_DEFAULT_BASE_URL, help="18mh 站点入口；也可传 https://18mh.net/mv/all")
+    mh18_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
+    mh18_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
+    mh18_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
+    mh18_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
+    mh18_monitor_parser.add_argument("--skip-cleanup", action="store_true", help="本轮监控后不执行清理")
+    mh18_monitor_parser.add_argument("--private-pool", action="store_true", help="不加入公共视频池")
+    mh18_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
+    mh18_monitor_parser.set_defaults(func=command_monitor_18mh)
+
+    rou_monitor_parser = subparsers.add_parser("monitor-rou", help="单独抓取 RouVideo/肉視頻视频并入库")
+    rou_monitor_parser.add_argument("--base-url", default=ROU_DEFAULT_BASE_URL, help="RouVideo 站点入口；也可传 https://rou.video/v")
+    rou_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
+    rou_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
+    rou_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
+    rou_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
+    rou_monitor_parser.add_argument("--skip-cleanup", action="store_true", help="本轮监控后不执行清理")
+    rou_monitor_parser.add_argument("--private-pool", action="store_true", help="不加入公共视频池")
+    rou_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
+    rou_monitor_parser.set_defaults(func=command_monitor_rou)
+
+    dadaafa_monitor_parser = subparsers.add_parser("monitor-dadaafa", help="单独抓取 DadaAFA 视频并入库")
+    dadaafa_monitor_parser.add_argument("--base-url", default=DADAAFA_DEFAULT_BASE_URL, help="DadaAFA 站点入口；也可传 https://dadaafa.cc/?utm_source=xx&tab=new")
+    dadaafa_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
+    dadaafa_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
+    dadaafa_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
+    dadaafa_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
+    dadaafa_monitor_parser.add_argument("--skip-cleanup", action="store_true", help="本轮监控后不执行清理")
+    dadaafa_monitor_parser.add_argument("--private-pool", action="store_true", help="不加入公共视频池")
+    dadaafa_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
+    dadaafa_monitor_parser.set_defaults(func=command_monitor_dadaafa)
+
+    j18_monitor_parser = subparsers.add_parser("monitor-18j", help="单独抓取 18J.TV 视频并入库")
+    j18_monitor_parser.add_argument("--base-url", default=J18_DEFAULT_BASE_URL, help="18J.TV 站点入口；也可传 https://18j.tv/show/1/")
+    j18_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
+    j18_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
+    j18_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
+    j18_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
+    j18_monitor_parser.add_argument("--skip-cleanup", action="store_true", help="本轮监控后不执行清理")
+    j18_monitor_parser.add_argument("--private-pool", action="store_true", help="不加入公共视频池")
+    j18_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
+    j18_monitor_parser.set_defaults(func=command_monitor_18j)
+
+    porna91_monitor_parser = subparsers.add_parser("monitor-91porna", help="单独抓取 91porna 视频并入库")
+    porna91_monitor_parser.add_argument("--base-url", default=PORNA91_DEFAULT_BASE_URL, help="91porna 站点入口；也可传 https://91porna.com/comic/index/video?category=new_update")
+    porna91_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
+    porna91_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
+    porna91_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
+    porna91_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
+    porna91_monitor_parser.add_argument("--skip-cleanup", action="store_true", help="本轮监控后不执行清理")
+    porna91_monitor_parser.add_argument("--private-pool", action="store_true", help="不加入公共视频池")
+    porna91_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
+    porna91_monitor_parser.set_defaults(func=command_monitor_91porna)
+
+    tikporn_monitor_parser = subparsers.add_parser("monitor-tikporn", help="单独抓取 Tik.Porn 视频并入库")
+    tikporn_monitor_parser.add_argument("--base-url", default=TIKPORN_DEFAULT_BASE_URL, help="Tik.Porn 站点入口")
+    tikporn_monitor_parser.add_argument("--max-pages", type=int, default=1, help="兼容参数；Tik.Porn 最新接口当前固定返回最新一页")
+    tikporn_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
+    tikporn_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
+    tikporn_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
+    tikporn_monitor_parser.add_argument("--skip-cleanup", action="store_true", help="本轮监控后不执行清理")
+    tikporn_monitor_parser.add_argument("--private-pool", action="store_true", help="不加入公共视频池")
+    tikporn_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
+    tikporn_monitor_parser.set_defaults(func=command_monitor_tikporn)
+
     subscribe_parser = subparsers.add_parser("subscribe", help="用 API key 管理订阅列表")
     subscribe_parser.add_argument("action", choices=["add", "remove", "set", "list"], help="订阅动作")
     subscribe_parser.add_argument("--api-key", required=True, help="客户端 API key")
@@ -4419,6 +4942,42 @@ def build_parser() -> argparse.ArgumentParser:
     refresh_douyin_parser.add_argument("--refresh-window-minutes", type=int, default=HEILIAO_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
     refresh_douyin_parser.add_argument("--critical-window-minutes", type=int, default=HEILIAO_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
     refresh_douyin_parser.set_defaults(func=command_refresh_douyin_playback_urls)
+
+    refresh_mh18_parser = subparsers.add_parser("refresh-18mh-playback-urls", help="刷新 18mh/禁漫天堂播放 URL")
+    refresh_mh18_parser.add_argument("--limit", type=int, default=30, help="单次最多处理条数")
+    refresh_mh18_parser.add_argument("--refresh-window-minutes", type=int, default=MH18_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
+    refresh_mh18_parser.add_argument("--critical-window-minutes", type=int, default=MH18_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
+    refresh_mh18_parser.set_defaults(func=command_refresh_18mh_playback_urls)
+
+    refresh_rou_parser = subparsers.add_parser("refresh-rou-playback-urls", help="刷新 RouVideo/肉視頻播放 URL")
+    refresh_rou_parser.add_argument("--limit", type=int, default=30, help="单次最多处理条数")
+    refresh_rou_parser.add_argument("--refresh-window-minutes", type=int, default=ROU_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
+    refresh_rou_parser.add_argument("--critical-window-minutes", type=int, default=ROU_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
+    refresh_rou_parser.set_defaults(func=command_refresh_rou_playback_urls)
+
+    refresh_dadaafa_parser = subparsers.add_parser("refresh-dadaafa-playback-urls", help="刷新 DadaAFA 播放 URL（仅处理带过期时间的历史记录）")
+    refresh_dadaafa_parser.add_argument("--limit", type=int, default=30, help="单次最多处理条数")
+    refresh_dadaafa_parser.add_argument("--refresh-window-minutes", type=int, default=DADAAFA_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
+    refresh_dadaafa_parser.add_argument("--critical-window-minutes", type=int, default=DADAAFA_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
+    refresh_dadaafa_parser.set_defaults(func=command_refresh_dadaafa_playback_urls)
+
+    refresh_j18_parser = subparsers.add_parser("refresh-18j-playback-urls", help="刷新 18J.TV 播放 URL（仅处理带过期时间的历史记录）")
+    refresh_j18_parser.add_argument("--limit", type=int, default=30, help="单次最多处理条数")
+    refresh_j18_parser.add_argument("--refresh-window-minutes", type=int, default=J18_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
+    refresh_j18_parser.add_argument("--critical-window-minutes", type=int, default=J18_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
+    refresh_j18_parser.set_defaults(func=command_refresh_18j_playback_urls)
+
+    refresh_porna91_parser = subparsers.add_parser("refresh-91porna-playback-urls", help="刷新 91porna 播放 URL（仅处理带过期时间的历史记录）")
+    refresh_porna91_parser.add_argument("--limit", type=int, default=30, help="单次最多处理条数")
+    refresh_porna91_parser.add_argument("--refresh-window-minutes", type=int, default=PORNA91_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
+    refresh_porna91_parser.add_argument("--critical-window-minutes", type=int, default=PORNA91_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
+    refresh_porna91_parser.set_defaults(func=command_refresh_91porna_playback_urls)
+
+    refresh_tikporn_parser = subparsers.add_parser("refresh-tikporn-playback-urls", help="刷新 Tik.Porn 播放 URL（仅处理带过期时间的历史记录）")
+    refresh_tikporn_parser.add_argument("--limit", type=int, default=30, help="单次最多处理条数")
+    refresh_tikporn_parser.add_argument("--refresh-window-minutes", type=int, default=TIKPORN_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
+    refresh_tikporn_parser.add_argument("--critical-window-minutes", type=int, default=TIKPORN_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
+    refresh_tikporn_parser.set_defaults(func=command_refresh_tikporn_playback_urls)
 
     seed_system_parser = subparsers.add_parser("seed-system-targets", help="初始化系统公共视频池目标")
     seed_system_parser.add_argument("--file", help="系统目标 JSON 文件；默认使用内置目标")

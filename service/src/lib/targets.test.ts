@@ -93,6 +93,66 @@ test("parseTarget understands Douyin site targets", () => {
   });
 });
 
+test("parseTarget understands 18mh site targets", () => {
+  assert.deepEqual(parseTarget("18mh:https://18mh.net/mv/all"), {
+    source: "18mh",
+    kind: "site",
+    value: "https://18mh.net",
+    normalizedValue: "18mh.net",
+    tags: [],
+  });
+});
+
+test("parseTarget understands RouVideo site targets", () => {
+  assert.deepEqual(parseTarget("rou:https://rou.video/v"), {
+    source: "rou",
+    kind: "site",
+    value: "https://rou.video",
+    normalizedValue: "rou.video",
+    tags: [],
+  });
+});
+
+test("parseTarget understands DadaAFA site targets", () => {
+  assert.deepEqual(parseTarget("https://dadaafa.cc/?utm_source=xx&tab=new"), {
+    source: "dadaafa",
+    kind: "site",
+    value: "https://dadaafa.cc",
+    normalizedValue: "dadaafa.cc",
+    tags: [],
+  });
+});
+
+test("parseTarget understands 18J.TV site targets", () => {
+  assert.deepEqual(parseTarget("https://18j.tv/show/1/"), {
+    source: "18j",
+    kind: "site",
+    value: "https://18j.tv",
+    normalizedValue: "18j.tv",
+    tags: [],
+  });
+});
+
+test("parseTarget understands Tik.Porn site targets", () => {
+  assert.deepEqual(parseTarget("tikporn:https://tik.porn/"), {
+    source: "tikporn",
+    kind: "site",
+    value: "https://tik.porn",
+    normalizedValue: "tik.porn",
+    tags: [],
+  });
+});
+
+test("parseTarget understands 91porna site targets", () => {
+  assert.deepEqual(parseTarget("91porna:https://91porna.com/comic/index/video?category=new_update"), {
+    source: "91porna",
+    kind: "site",
+    value: "https://91porna.com",
+    normalizedValue: "91porna.com",
+    tags: [],
+  });
+});
+
 test("parseTargets deduplicates normalized values", () => {
   const targets = parseTargets(["OpenAI", "openai", "search:AI", "search:ai", "youtube:UCE_M8A5yxnLfW0KghEeajjw"]);
   assert.equal(targets.length, 3);
@@ -185,6 +245,72 @@ test("parseTargets normalizes explicit source aliases", () => {
       kind: "site",
       value: "https://www.51baoliao01.com",
       normalizedValue: "www.51baoliao01.com",
+      category: "adult",
+      tags: [],
+    },
+  ]);
+
+  assert.deepEqual(parseTargets([{ source: "mh18", kind: "site", target: "18mh.net/mv/all", category: "adult" }]), [
+    {
+      source: "18mh",
+      kind: "site",
+      value: "https://18mh.net",
+      normalizedValue: "18mh.net",
+      category: "adult",
+      tags: [],
+    },
+  ]);
+
+  assert.deepEqual(parseTargets([{ source: "rouvideo", kind: "site", target: "rou.video/v", category: "adult" }]), [
+    {
+      source: "rou",
+      kind: "site",
+      value: "https://rou.video",
+      normalizedValue: "rou.video",
+      category: "adult",
+      tags: [],
+    },
+  ]);
+
+  assert.deepEqual(parseTargets([{ source: "dada", kind: "site", target: "dadaafa.cc/?utm_source=xx&tab=new", category: "adult" }]), [
+    {
+      source: "dadaafa",
+      kind: "site",
+      value: "https://dadaafa.cc",
+      normalizedValue: "dadaafa.cc",
+      category: "adult",
+      tags: [],
+    },
+  ]);
+
+  assert.deepEqual(parseTargets([{ source: "j18", kind: "site", target: "18j.tv/show/1/", category: "adult" }]), [
+    {
+      source: "18j",
+      kind: "site",
+      value: "https://18j.tv",
+      normalizedValue: "18j.tv",
+      category: "adult",
+      tags: [],
+    },
+  ]);
+
+  assert.deepEqual(parseTargets([{ source: "tik.porn", kind: "site", target: "tik.porn", category: "adult" }]), [
+    {
+      source: "tikporn",
+      kind: "site",
+      value: "https://tik.porn",
+      normalizedValue: "tik.porn",
+      category: "adult",
+      tags: [],
+    },
+  ]);
+
+  assert.deepEqual(parseTargets([{ source: "porna91", kind: "site", target: "91porna.com/comic/index/video?category=new_update", category: "adult" }]), [
+    {
+      source: "91porna",
+      kind: "site",
+      value: "https://91porna.com",
+      normalizedValue: "91porna.com",
       category: "adult",
       tags: [],
     },
@@ -302,6 +428,98 @@ test("parseTargets accepts explicit Douyin object targets", () => {
       normalizedValue: "xygrfrfb3g.b2h7y8w.com",
       category: "adult",
       tags: ["抖阴", "视频"],
+    },
+  ]);
+});
+
+test("parseTargets accepts explicit 18mh object targets", () => {
+  const targets = parseTargets([
+    {
+      source: "18mh",
+      kind: "site",
+      target: "https://18mh.net/mv/all",
+      category: "adult",
+      tags: ["18MH", "视频"],
+    },
+  ]);
+
+  assert.deepEqual(targets, [
+    {
+      source: "18mh",
+      kind: "site",
+      value: "https://18mh.net",
+      normalizedValue: "18mh.net",
+      category: "adult",
+      tags: ["18MH", "视频"],
+    },
+  ]);
+});
+
+test("parseTargets accepts explicit RouVideo object targets", () => {
+  const targets = parseTargets([
+    {
+      source: "rou",
+      kind: "site",
+      target: "https://rou.video/v",
+      category: "adult",
+      tags: ["肉視頻", "视频"],
+    },
+  ]);
+
+  assert.deepEqual(targets, [
+    {
+      source: "rou",
+      kind: "site",
+      value: "https://rou.video",
+      normalizedValue: "rou.video",
+      category: "adult",
+      tags: ["肉視頻", "视频"],
+    },
+  ]);
+});
+
+test("parseTargets accepts explicit DadaAFA object targets", () => {
+  const targets = parseTargets([
+    {
+      source: "dadaafa",
+      kind: "site",
+      target: "https://dadaafa.cc/?utm_source=xx&tab=new",
+      category: "adult",
+      tags: ["DadaAFA", "视频"],
+    },
+  ]);
+
+  assert.deepEqual(targets, [
+    {
+      source: "dadaafa",
+      kind: "site",
+      value: "https://dadaafa.cc",
+      normalizedValue: "dadaafa.cc",
+      category: "adult",
+      tags: ["DadaAFA", "视频"],
+    },
+  ]);
+});
+
+test("parseTargets accepts explicit 18J.TV object targets", () => {
+  const targets = parseTargets([
+    {
+      source: "18j",
+      kind: "site",
+      target: "https://18j.tv/show/1/",
+      category: "adult",
+      tags: ["18J", "视频"],
+    },
+  ]);
+
+  assert.deepEqual(targets, [
+    {
+      source: "18j",
+      kind: "site",
+      value: "https://18j.tv",
+      normalizedValue: "18j.tv",
+      category: "adult",
+      tags: ["18J", "视频"],
     },
   ]);
 });

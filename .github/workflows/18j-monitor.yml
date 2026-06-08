@@ -1,0 +1,56 @@
+name: 18J.TV Video Monitor
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: x2ding-18j-monitor
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '35 * * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: '18J.TV 站点入口'
+        required: false
+        default: 'https://18j.tv/show/1/'
+      max_pages:
+        description: '单次最多分页数'
+        required: false
+        default: '2'
+
+jobs:
+  monitor-18j:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: collector/requirements.txt
+
+      - name: Install dependencies
+        working-directory: collector
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run 18J.TV monitor
+        working-directory: collector
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BASE_URL: ${{ inputs.base_url || vars.J18_BASE_URL || 'https://18j.tv/show/1/' }}
+          MAX_PAGES: ${{ inputs.max_pages || vars.J18_MONITOR_MAX_PAGES || '2' }}
+        run: |
+          python twitter_monitor.py monitor-18j \
+            --base-url "${BASE_URL}" \
+            --max-pages "${MAX_PAGES}" \
+            --retention-hours 84
