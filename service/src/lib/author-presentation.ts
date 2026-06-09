@@ -24,6 +24,7 @@ const DETAIL_LINK_PROFILE_PLATFORMS: Record<string, string> = {
   rou: "肉視頻",
   dadaafa: "DadaAFA",
   "18j": "18J.TV",
+  "1mtif": "蜜桃视频",
   tikporn: "Tik.Porn",
   "91porna": "91porna",
   "91porn": "91porn",
@@ -88,6 +89,10 @@ export function normalizePresentationSource(value: string) {
     case "18j.tv":
     case "j18":
       return "18j";
+    case "1mtif":
+    case "mtif":
+    case "1mtif.sbs":
+      return "1mtif";
     case "tik":
     case "tikporn":
     case "tik.porn":
@@ -152,6 +157,8 @@ function sourceDisplayName(source: string) {
       return "DadaAFA";
     case "18j":
       return "18J.TV";
+    case "1mtif":
+      return "蜜桃视频";
     case "tikporn":
       return "Tik.Porn";
     case "91porna":

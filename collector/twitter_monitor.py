@@ -82,6 +82,20 @@ try:
         refresh_playback_urls as refresh_18mh_playback_urls,
         upsert_video_item as upsert_18mh_video_item,
     )
+    from collector.mtif_source import (
+        MTIF_CRITICAL_WINDOW_MINUTES,
+        MTIF_DEFAULT_BASE_URL,
+        MTIF_KIND,
+        MTIF_REFRESH_WINDOW_MINUTES,
+        MTIF_RETENTION_HOURS,
+        MTIF_SITE_NAME,
+        MTIF_SOURCE,
+        is_mtif_target_url,
+        monitor_site as monitor_mtif_site,
+        normalize_mtif_target_value,
+        refresh_playback_urls as refresh_mtif_playback_urls,
+        upsert_video_item as upsert_mtif_video_item,
+    )
     from collector.porna91_source import (
         PORNA91_CRITICAL_WINDOW_MINUTES,
         PORNA91_DEFAULT_BASE_URL,
@@ -192,6 +206,20 @@ except ModuleNotFoundError:
         refresh_playback_urls as refresh_18mh_playback_urls,
         upsert_video_item as upsert_18mh_video_item,
     )
+    from mtif_source import (
+        MTIF_CRITICAL_WINDOW_MINUTES,
+        MTIF_DEFAULT_BASE_URL,
+        MTIF_KIND,
+        MTIF_REFRESH_WINDOW_MINUTES,
+        MTIF_RETENTION_HOURS,
+        MTIF_SITE_NAME,
+        MTIF_SOURCE,
+        is_mtif_target_url,
+        monitor_site as monitor_mtif_site,
+        normalize_mtif_target_value,
+        refresh_playback_urls as refresh_mtif_playback_urls,
+        upsert_video_item as upsert_mtif_video_item,
+    )
     from porna91_source import (
         PORNA91_CRITICAL_WINDOW_MINUTES,
         PORNA91_DEFAULT_BASE_URL,
@@ -296,6 +324,7 @@ DETAIL_LINK_PROFILE_SOURCES = {
     MH18_SOURCE,
     ROU_SOURCE,
     DADAAFA_SOURCE,
+    MTIF_SOURCE,
     BADNEWS_SOURCE,
     TIKPORN_SOURCE,
     PORNA91_SOURCE,
@@ -409,6 +438,18 @@ def parse_targets(raw: str | list[str] | None) -> list[str]:
 
 def parse_target_value(target: str) -> dict[str, str]:
     normalized = normalize_target(target)
+    if normalized.lower().startswith("1mtif:"):
+        value = normalize_mtif_target_value(normalized[len("1mtif:") :].strip())
+        return {"source": MTIF_SOURCE, "kind": MTIF_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if normalized.lower().startswith("mtif:"):
+        value = normalize_mtif_target_value(normalized[len("mtif:") :].strip())
+        return {"source": MTIF_SOURCE, "kind": MTIF_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
+    if is_mtif_target_url(normalized):
+        value = normalize_mtif_target_value(normalized)
+        return {"source": MTIF_SOURCE, "kind": MTIF_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
+
     if normalized.lower().startswith("badnews:"):
         value = normalize_badnews_target_value(normalized[len("badnews:") :].strip())
         return {"source": BADNEWS_SOURCE, "kind": BADNEWS_KIND, "value": value, "normalized_value": normalize_site_target_key(value)}
@@ -582,6 +623,8 @@ def format_target(kind: str, value: str) -> str:
 
 
 def format_target_row(target_row: dict) -> str:
+    if target_row.get("source") == MTIF_SOURCE:
+        return f"1mtif:{target_row['value']}"
     if target_row.get("source") == BADNEWS_SOURCE:
         return f"badnews:{target_row['value']}"
     if target_row.get("source") == PORN91_SOURCE:
@@ -634,6 +677,8 @@ def normalized_presentation_source(source: str | None) -> str:
         return DADAAFA_SOURCE
     if source_key in {"18j", "18j.tv", "j18"}:
         return J18_SOURCE
+    if source_key in {"1mtif", "mtif", "1mtif.sbs"}:
+        return MTIF_SOURCE
     if source_key in {"tikporn", "tik", "tik.porn"}:
         return TIKPORN_SOURCE
     if source_key in {"badnews", "bad.news"}:
@@ -658,6 +703,7 @@ def source_display_name(source: str | None) -> str:
         ROU_SOURCE: ROU_SITE_NAME,
         DADAAFA_SOURCE: DADAAFA_SITE_NAME,
         J18_SOURCE: J18_SITE_NAME,
+        MTIF_SOURCE: MTIF_SITE_NAME,
         TIKPORN_SOURCE: TIKPORN_SITE_NAME,
         BADNEWS_SOURCE: BADNEWS_SITE_NAME,
         PORN91_SOURCE: PORN91_SITE_NAME,
@@ -4770,6 +4816,38 @@ def command_refresh_18j_playback_urls(args) -> int:
     return 0
 
 
+def command_monitor_1mtif(args) -> int:
+    base_url = args.base_url or MTIF_DEFAULT_BASE_URL
+    retention_hours = args.retention_hours if args.retention_hours is not None else MTIF_RETENTION_HOURS
+    if args.retention_days is not None:
+        retention_hours = args.retention_days * 24
+    max_records = args.max_records if args.max_records is not None else DEFAULT_MAX_RECORDS
+    if args.dry_run and not DATABASE_URL:
+        stats = monitor_mtif_site(None, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=True)
+        print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+        return 0
+    with get_db_connection() as conn:
+        stats = monitor_mtif_site(conn, base_url=base_url, max_pages=max(1, args.max_pages), retention_hours=max(1, retention_hours), public_pool=not args.private_pool, dry_run=args.dry_run)
+        if args.dry_run:
+            conn.rollback()
+        else:
+            conn.commit()
+        if not args.skip_cleanup and not args.dry_run:
+            cleanup_stats = cleanup_records(conn, max(1, (retention_hours + 23) // 24), max_records)
+            conn.commit()
+            stats = {**stats, "cleanup": cleanup_stats}
+    print(json.dumps(stats, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_refresh_1mtif_playback_urls(args) -> int:
+    with get_db_connection() as conn:
+        stats = refresh_mtif_playback_urls(conn, limit=max(1, args.limit), refresh_window_minutes=max(1, args.refresh_window_minutes), critical_window_minutes=max(1, args.critical_window_minutes))
+        conn.commit()
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
 def command_monitor_91porna(args) -> int:
     base_url = args.base_url or PORNA91_DEFAULT_BASE_URL
     retention_hours = args.retention_hours if args.retention_hours is not None else PORNA91_RETENTION_HOURS
@@ -5023,6 +5101,17 @@ def build_parser() -> argparse.ArgumentParser:
     j18_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
     j18_monitor_parser.set_defaults(func=command_monitor_18j)
 
+    mtif_monitor_parser = subparsers.add_parser("monitor-1mtif", help="单独抓取 1mtif/蜜桃视频并入库")
+    mtif_monitor_parser.add_argument("--base-url", default=MTIF_DEFAULT_BASE_URL, help="1mtif 站点入口；默认从 /type/2 最新分页抓取")
+    mtif_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
+    mtif_monitor_parser.add_argument("--retention-hours", type=int, default=None, help="视频业务保留小时数，默认 84")
+    mtif_monitor_parser.add_argument("--retention-days", type=int, default=None, help="兼容旧参数：视频业务保留天数")
+    mtif_monitor_parser.add_argument("--max-records", type=int, default=None, help="最大保留记录数")
+    mtif_monitor_parser.add_argument("--skip-cleanup", action="store_true", help="本轮监控后不执行清理")
+    mtif_monitor_parser.add_argument("--private-pool", action="store_true", help="不加入公共视频池")
+    mtif_monitor_parser.add_argument("--dry-run", action="store_true", help="只解析和验证，不写入数据库")
+    mtif_monitor_parser.set_defaults(func=command_monitor_1mtif)
+
     porna91_monitor_parser = subparsers.add_parser("monitor-91porna", help="单独抓取 91porna 视频并入库")
     porna91_monitor_parser.add_argument("--base-url", default=PORNA91_DEFAULT_BASE_URL, help="91porna 站点入口；也可传 https://91porna.com/comic/index/video?category=new_update")
     porna91_monitor_parser.add_argument("--max-pages", type=int, default=2, help="单次最多分页数")
@@ -5141,6 +5230,12 @@ def build_parser() -> argparse.ArgumentParser:
     refresh_j18_parser.add_argument("--refresh-window-minutes", type=int, default=J18_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
     refresh_j18_parser.add_argument("--critical-window-minutes", type=int, default=J18_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
     refresh_j18_parser.set_defaults(func=command_refresh_18j_playback_urls)
+
+    refresh_mtif_parser = subparsers.add_parser("refresh-1mtif-playback-urls", help="刷新 1mtif 播放 URL（仅处理带过期时间的历史记录）")
+    refresh_mtif_parser.add_argument("--limit", type=int, default=30, help="单次最多处理条数")
+    refresh_mtif_parser.add_argument("--refresh-window-minutes", type=int, default=MTIF_REFRESH_WINDOW_MINUTES, help="普通刷新窗口")
+    refresh_mtif_parser.add_argument("--critical-window-minutes", type=int, default=MTIF_CRITICAL_WINDOW_MINUTES, help="临界过期窗口")
+    refresh_mtif_parser.set_defaults(func=command_refresh_1mtif_playback_urls)
 
     refresh_porna91_parser = subparsers.add_parser("refresh-91porna-playback-urls", help="刷新 91porna 播放 URL（仅处理带过期时间的历史记录）")
     refresh_porna91_parser.add_argument("--limit", type=int, default=30, help="单次最多处理条数")

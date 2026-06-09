@@ -1,4 +1,4 @@
-export type TargetSource = "twitter" | "youtube" | "heiliao" | "cg91" | "baoliao51" | "douyin" | "18mh" | "rou" | "dadaafa" | "18j" | "tikporn" | "91porna" | "91porn" | "badnews";
+export type TargetSource = "twitter" | "youtube" | "heiliao" | "cg91" | "baoliao51" | "douyin" | "18mh" | "rou" | "dadaafa" | "18j" | "1mtif" | "tikporn" | "91porna" | "91porn" | "badnews";
 export type TargetKind = "user" | "keyword" | "channel" | "site";
 
 export type ParsedTarget = {
@@ -23,6 +23,7 @@ const MH18_DEFAULT_URL = "https://18mh.net";
 const ROU_DEFAULT_URL = "https://rou.video";
 const DADAAFA_DEFAULT_URL = "https://dadaafa.cc";
 const J18_DEFAULT_URL = "https://18j.tv";
+const MTIF_DEFAULT_URL = "https://1mtif.sbs";
 const TIKPORN_DEFAULT_URL = "https://tik.porn";
 const PORNA91_DEFAULT_URL = "https://91porna.com";
 const PORN91_DEFAULT_URL = "https://91porn.com";
@@ -180,6 +181,25 @@ function is18jTargetURL(raw: string) {
     }
     const url = new URL(value.includes("://") ? value : `https://${value}`);
     return url.host.toLowerCase() === "18j.tv" || url.host.toLowerCase() === "www.18j.tv";
+  } catch {
+    return false;
+  }
+}
+
+function normalizeMtifTargetValue(raw: string) {
+  const value = (raw.trim() || MTIF_DEFAULT_URL).replace(/\/+$/, "");
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  return `${url.protocol}//${url.host.toLowerCase()}`;
+}
+
+function isMtifTargetURL(raw: string) {
+  try {
+    const value = raw.trim();
+    if (!value) {
+      return false;
+    }
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.host.toLowerCase() === "1mtif.sbs" || url.host.toLowerCase() === "www.1mtif.sbs";
   } catch {
     return false;
   }
@@ -463,6 +483,21 @@ export function parseTarget(raw: string): ParsedTarget {
     return { source: "18j", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
   }
 
+  if (value.toLowerCase().startsWith("1mtif:")) {
+    const normalized = normalizeMtifTargetValue(value.slice("1mtif:".length));
+    return { source: "1mtif", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (value.toLowerCase().startsWith("mtif:")) {
+    const normalized = normalizeMtifTargetValue(value.slice("mtif:".length));
+    return { source: "1mtif", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
+  if (isMtifTargetURL(value)) {
+    const normalized = normalizeMtifTargetValue(value);
+    return { source: "1mtif", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  }
+
   if (value.toLowerCase().startsWith("douyin:")) {
     const normalized = normalizeDouyinTargetValue(value.slice("douyin:".length));
     return { source: "douyin", kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
@@ -604,6 +639,9 @@ export function formatTarget(target: ParsedTarget | { source?: TargetSource; kin
   if (target.source === "18j") {
     return `18j:${target.value}`;
   }
+  if (target.source === "1mtif") {
+    return `1mtif:${target.value}`;
+  }
   if (target.source === "douyin") {
     return `douyin:${target.value}`;
   }
@@ -719,6 +757,10 @@ function normalizeTargetSource(rawSource: unknown): TargetSource {
     case "18j.tv":
     case "j18":
       return "18j";
+    case "1mtif":
+    case "mtif":
+    case "1mtif.sbs":
+      return "1mtif";
     case "tik":
     case "tikporn":
     case "tik.porn":
@@ -805,6 +847,12 @@ function normalizeTargetKind(rawKind: unknown, source: TargetSource): TargetKind
     }
     throw new Error("18j targets must use site kind.");
   }
+  if (source === "1mtif") {
+    if (kind === "site") {
+      return "site";
+    }
+    throw new Error("1mtif targets must use site kind.");
+  }
   if (source === "tikporn") {
     if (kind === "site") {
       return "site";
@@ -890,6 +938,9 @@ function parseObjectTarget(candidate: { source?: unknown; kind?: unknown; target
     parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
   } else if (source === "18j") {
     const normalized = normalize18jTargetValue(candidate.target);
+    parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
+  } else if (source === "1mtif") {
+    const normalized = normalizeMtifTargetValue(candidate.target);
     parsed = { source, kind: "site", value: normalized, normalizedValue: normalizeHeiliaoTargetKey(normalized), tags: [] };
   } else if (source === "tikporn") {
     const normalized = normalizeTikPornTargetValue(candidate.target);

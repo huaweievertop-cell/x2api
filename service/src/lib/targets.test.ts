@@ -133,6 +133,24 @@ test("parseTarget understands 18J.TV site targets", () => {
   });
 });
 
+test("parseTarget understands 1mtif site targets", () => {
+  assert.deepEqual(parseTarget("https://1mtif.sbs/type/2"), {
+    source: "1mtif",
+    kind: "site",
+    value: "https://1mtif.sbs",
+    normalizedValue: "1mtif.sbs",
+    tags: [],
+  });
+
+  assert.deepEqual(parseTarget("mtif:1mtif.sbs"), {
+    source: "1mtif",
+    kind: "site",
+    value: "https://1mtif.sbs",
+    normalizedValue: "1mtif.sbs",
+    tags: [],
+  });
+});
+
 test("parseTarget understands Tik.Porn site targets", () => {
   assert.deepEqual(parseTarget("tikporn:https://tik.porn/"), {
     source: "tikporn",
@@ -309,6 +327,17 @@ test("parseTargets normalizes explicit source aliases", () => {
       kind: "site",
       value: "https://18j.tv",
       normalizedValue: "18j.tv",
+      category: "adult",
+      tags: [],
+    },
+  ]);
+
+  assert.deepEqual(parseTargets([{ source: "mtif", kind: "site", target: "1mtif.sbs/type/2", category: "adult" }]), [
+    {
+      source: "1mtif",
+      kind: "site",
+      value: "https://1mtif.sbs",
+      normalizedValue: "1mtif.sbs",
       category: "adult",
       tags: [],
     },
@@ -562,6 +591,29 @@ test("parseTargets accepts explicit 18J.TV object targets", () => {
       normalizedValue: "18j.tv",
       category: "adult",
       tags: ["18J", "视频"],
+    },
+  ]);
+});
+
+test("parseTargets accepts explicit 1mtif object targets", () => {
+  const targets = parseTargets([
+    {
+      source: "1mtif",
+      kind: "site",
+      target: "https://1mtif.sbs/type/2",
+      category: "adult",
+      tags: ["蜜桃视频", "视频"],
+    },
+  ]);
+
+  assert.deepEqual(targets, [
+    {
+      source: "1mtif",
+      kind: "site",
+      value: "https://1mtif.sbs",
+      normalizedValue: "1mtif.sbs",
+      category: "adult",
+      tags: ["蜜桃视频", "视频"],
     },
   ]);
 });
