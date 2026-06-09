@@ -26,6 +26,7 @@ const DETAIL_LINK_PROFILE_PLATFORMS: Record<string, string> = {
   "18j": "18J.TV",
   tikporn: "Tik.Porn",
   "91porna": "91porna",
+  "91porn": "91porn",
 };
 
 export function buildAuthorPresentation(input: AuthorPresentationInput): AuthorPresentation {
@@ -90,9 +91,11 @@ export function normalizePresentationSource(value: string) {
     case "tikporn":
     case "tik.porn":
       return "tikporn";
+    case "91porn":
+    case "91porn.com":
+      return "91porn";
     case "91porna":
     case "porna91":
-    case "91porn":
       return "91porna";
     default:
       return source;
@@ -149,6 +152,8 @@ function sourceDisplayName(source: string) {
       return "Tik.Porn";
     case "91porna":
       return "91porna";
+    case "91porn":
+      return "91porn";
     default:
       return source || "X";
   }

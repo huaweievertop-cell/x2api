@@ -9,6 +9,7 @@ from collector.twitter_monitor import (
     insert_items,
     normalize_douyin_item,
     parse_target_value,
+    upsert_91porn_video_item,
     upsert_18j_video_item,
     upsert_baoliao51_video_item,
     upsert_cg91_video_item,
@@ -104,6 +105,7 @@ class AuthorPresentationTest(unittest.TestCase):
             ("18j", "18J.TV", "https://18j.tv/v/37590/"),
             ("tikporn", "Tik.Porn", "https://tik.porn/video/1529368"),
             ("91porna", "91porna", "https://91porna.com/comic/index/detail?video_key=346951"),
+            ("91porn", "91porn", "https://91porn.com/view_video.php?viewkey=abc123"),
         ]
 
         for source, platform, link in cases:
@@ -183,6 +185,17 @@ class AuthorPresentationTest(unittest.TestCase):
                 "kind": "site",
                 "value": "https://91porna.com",
                 "normalized_value": "91porna.com",
+            },
+        )
+
+    def test_parse_target_value_accepts_91porn_url(self):
+        self.assertEqual(
+            parse_target_value("https://91porn.com/v.php?next=watch&page=1"),
+            {
+                "source": "91porn",
+                "kind": "site",
+                "value": "https://91porn.com",
+                "normalized_value": "91porn.com",
             },
         )
 
@@ -306,6 +319,7 @@ class AuthorPresentationTest(unittest.TestCase):
         self.assertTrue(upsert_18mh_video_item(conn, {"id": "target-id", "source": "18mh", "kind": "site", "value": "https://18mh.net"}, detail, player | {"guid": "18mh:1"}, verified, 84))
         self.assertTrue(upsert_dadaafa_video_item(conn, {"id": "target-id", "source": "dadaafa", "kind": "site", "value": "https://dadaafa.cc"}, detail | {"video_id": "1"}, player | {"guid": "dadaafa:1"}, verified, 84))
         self.assertTrue(upsert_18j_video_item(conn, {"id": "target-id", "source": "18j", "kind": "site", "value": "https://18j.tv"}, detail | {"video_id": "1"}, player | {"guid": "18j:1"}, verified, 84))
+        self.assertTrue(upsert_91porn_video_item(conn, {"id": "target-id", "source": "91porn", "kind": "site", "value": "https://91porn.com"}, detail | {"url": "https://91porn.com/view_video.php?viewkey=1", "video_id": "1"}, player | {"guid": "91porn:1"}, verified | {"media_format": "mp4"}, 84))
         self.assertTrue(
             upsert_douyin_video_item(
                 conn,

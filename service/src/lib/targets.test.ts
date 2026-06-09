@@ -153,6 +153,16 @@ test("parseTarget understands 91porna site targets", () => {
   });
 });
 
+test("parseTarget understands 91porn site targets", () => {
+  assert.deepEqual(parseTarget("https://91porn.com/v.php?next=watch&page=1"), {
+    source: "91porn",
+    kind: "site",
+    value: "https://91porn.com",
+    normalizedValue: "91porn.com",
+    tags: [],
+  });
+});
+
 test("parseTargets deduplicates normalized values", () => {
   const targets = parseTargets(["OpenAI", "openai", "search:AI", "search:ai", "youtube:UCE_M8A5yxnLfW0KghEeajjw"]);
   assert.equal(targets.length, 3);
@@ -311,6 +321,17 @@ test("parseTargets normalizes explicit source aliases", () => {
       kind: "site",
       value: "https://91porna.com",
       normalizedValue: "91porna.com",
+      category: "adult",
+      tags: [],
+    },
+  ]);
+
+  assert.deepEqual(parseTargets([{ source: "91porn", kind: "site", target: "91porn.com/v.php?next=watch&page=1", category: "adult" }]), [
+    {
+      source: "91porn",
+      kind: "site",
+      value: "https://91porn.com",
+      normalizedValue: "91porn.com",
       category: "adult",
       tags: [],
     },
