@@ -394,6 +394,21 @@ def playlist_key_urls(video_url: str, playlist: str) -> list[str]:
     return urls
 
 
+def origin_header(url: str) -> str | None:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def playback_headers(referer: str) -> dict[str, str]:
+    result = {"Referer": referer}
+    origin = origin_header(referer)
+    if origin:
+        result["Origin"] = origin
+    return result
+
+
 def expected_duration_floor(expected_duration: int | None) -> float:
     if expected_duration and expected_duration > 0:
         return max(float(DADAAFA_MIN_VIDEO_DURATION_SECONDS), expected_duration * 0.6)
@@ -448,6 +463,7 @@ def verify_hls_url(video_url: str, referer: str, expected_duration: int | None =
 
     return {
         "video_url": video_url,
+        "playback_headers": playback_headers(referer),
         "video_url_expires_at": expires_at or DADAAFA_STABLE_VIDEO_URL_EXPIRES_AT,
         "playback_refresh_required": expires_at is not None,
         "playlist_bytes": len(playlist.encode("utf-8")),
@@ -548,6 +564,7 @@ def upsert_video_item(conn, target_row: dict, detail: dict, player: dict, verifi
         "tags": detail.get("tags") or player.get("tags") or [],
         "resolver": "dadaafa-nuxt-video-detail",
         "resolved_at": now_iso(),
+        "playback_headers": verified.get("playback_headers"),
         "video_url_expires_at": verified["video_url_expires_at"].isoformat(),
         "playback_refresh_required": verified.get("playback_refresh_required"),
         "playlist_duration_seconds": verified.get("playlist_duration_seconds"),
@@ -684,6 +701,7 @@ def monitor_site(conn, *, base_url: str, max_pages: int, retention_hours: int, p
 def refresh_playback_urls(conn, limit: int, refresh_window_minutes: int, critical_window_minutes: int) -> dict[str, int]:
     processed = refreshed = failed = skipped_static = 0
     queries = [
+        ("""SELECT i.* FROM items i INNER JOIN targets t ON t.id = i.target_id WHERE t.source = %s AND i.expires_at > NOW() AND i.video_url LIKE 'https://dadaafa.cc/api/web/video/meta/%%' ORDER BY i.published_at DESC LIMIT %s""", (DADAAFA_SOURCE, limit)),
         ("""SELECT i.* FROM items i INNER JOIN targets t ON t.id = i.target_id WHERE t.source = %s AND i.expires_at > NOW() AND i.video_url_expires_at <= NOW() + (%s || ' minutes')::interval ORDER BY i.video_url_expires_at ASC LIMIT %s""", (DADAAFA_SOURCE, critical_window_minutes, limit)),
         ("""SELECT i.* FROM items i INNER JOIN targets t ON t.id = i.target_id WHERE t.source = %s AND i.expires_at > NOW() AND i.video_url_expires_at <= NOW() + (%s || ' minutes')::interval ORDER BY i.video_url_expires_at ASC, i.published_at DESC LIMIT %s""", (DADAAFA_SOURCE, refresh_window_minutes, limit)),
     ]
@@ -718,6 +736,7 @@ def refresh_playback_urls(conn, limit: int, refresh_window_minutes: int, critica
                 next_metadata = metadata | {
                     "resolver": "dadaafa-nuxt-video-detail",
                     "resolved_at": now_iso(),
+                    "playback_headers": verified.get("playback_headers"),
                     "video_url_expires_at": verified["video_url_expires_at"].isoformat(),
                     "playback_refresh_required": verified.get("playback_refresh_required"),
                     "video_poster_url": detail.get("image") or metadata.get("video_poster_url"),

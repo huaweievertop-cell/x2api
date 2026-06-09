@@ -30,6 +30,7 @@ export type VideoFeedQuery = {
 type VideoFeedItemBase = {
   id: string;
   videoUrl: string;
+  playbackHeaders: Record<string, string> | null;
   coverUrl: string | null;
   title: string | null;
   caption: string | null;
@@ -503,6 +504,10 @@ export async function listVideoFeed(query: VideoFeedQuery) {
         i.guid,
         i.target_id AS "targetId",
         i.video_url AS "videoUrl",
+        CASE
+          WHEN jsonb_typeof(i.metadata->'playback_headers') = 'object' THEN i.metadata->'playback_headers'
+          ELSE NULL
+        END AS "playbackHeaders",
         ${itemVideoKey} AS "videoKey",
         COALESCE(i.metadata->>'video_poster_url', i.images->>0) AS "coverUrl",
         i.title,
@@ -655,6 +660,7 @@ export async function listVideoFeed(query: VideoFeedQuery) {
       ci.guid,
       ci."videoKey",
       ci."videoUrl",
+      ci."playbackHeaders",
       ci."coverUrl",
       ci.title,
       ci.caption,
