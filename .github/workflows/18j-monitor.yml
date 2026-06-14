@@ -48,6 +48,8 @@ jobs:
         working-directory: collector
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           BASE_URL: ${{ inputs.base_url || vars.J18_BASE_URL || 'https://18j.tv/show/1/' }}
           MAX_PAGES: ${{ inputs.max_pages || vars.J18_MONITOR_MAX_PAGES || '2' }}
         run: |

@@ -48,6 +48,8 @@ jobs:
         working-directory: collector
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           BASE_URL: ${{ inputs.base_url || vars.HS705_BASE_URL || 'https://705hs.com/Html/60/index-1.html' }}
           MAX_PAGES: ${{ inputs.max_pages || vars.HS705_MONITOR_MAX_PAGES || '1' }}
         run: |

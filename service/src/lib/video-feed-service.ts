@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { getSql, type QueryChunk } from "@/lib/db";
 import { decodeCursor, encodeCursor, normalizeLimit } from "@/lib/pagination";
 import { asRows } from "@/lib/sql-result";
@@ -354,6 +356,21 @@ function compareVideoFeedRowsByTime(
   }
 
   return right.id.localeCompare(left.id);
+}
+
+function stableFeedJitter(clientId: string, itemId: string) {
+  return Number.parseInt(createHash("sha256").update(`${clientId}:${itemId}`).digest("hex").slice(0, 8), 16);
+}
+
+function compareVideoFeedRowsForClient<T extends { id: string; sortTime: string | Date; storedAt: string | Date }>(clientId: string) {
+  return (left: T, right: T) => {
+    const timeOrder = compareVideoFeedRowsByTime(left, right);
+    if (timeOrder !== 0) {
+      return timeOrder;
+    }
+
+    return stableFeedJitter(clientId, left.id) - stableFeedJitter(clientId, right.id);
+  };
 }
 
 export function mergeVideoFeedCandidatePools<
@@ -749,8 +766,9 @@ export async function listVideoFeed(query: VideoFeedQuery) {
       source === "mixed"
         ? mergeVideoFeedCandidatePools(await Promise.all([fetchCandidates(bucket, "user"), fetchCandidates(bucket, "public")]))
         : await fetchCandidates(bucket, source === "public" ? "public" : source === "user" ? "user" : "all");
-    bucketCandidates.set(bucket, candidates);
-    return candidates;
+    const personalizedCandidates = candidates.sort(compareVideoFeedRowsForClient(query.clientId));
+    bucketCandidates.set(bucket, personalizedCandidates);
+    return personalizedCandidates;
   };
 
   const appendFromBucket = async (bucket: VideoFeedTimeBucket, enforceLimits: boolean, enforceConsecutive: boolean) => {

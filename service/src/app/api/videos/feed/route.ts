@@ -46,15 +46,15 @@ export async function GET(request: Request) {
   try {
     const client = await requireClient();
     const { searchParams } = new URL(request.url);
-    const result = await listVideoFeed({
+    const query = {
       clientId: client.id,
       limit: parsePositiveInt(searchParams.get("limit"), "limit"),
       cursor: searchParams.get("cursor"),
       tags: parseStringListParam(searchParams, "tag"),
       categories: parseStringListParam(searchParams, "category"),
       source: parseVideoFeedSource(searchParams.get("source")),
-    });
-
+    };
+    const result = await listVideoFeed(query);
     return jsonOk(absolutizeRelativeVideoUrls(result, request.url));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to query video feed.";

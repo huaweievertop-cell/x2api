@@ -48,12 +48,16 @@ jobs:
       - name: Seed system video targets
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
         run: |
           python collector/twitter_monitor.py seed-system-targets
 
       - name: Backfill video tags
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           TAG_LIMIT: ${{ inputs.tag_limit || '500' }}
         run: |
           python scripts/backfill_video_tags.py --apply --limit "${TAG_LIMIT}"
@@ -62,6 +66,8 @@ jobs:
         if: inputs.apply_cleanup != 'false'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           HIGH_SCORE_THRESHOLD: ${{ inputs.high_score_threshold || '20' }}
         run: |
           python scripts/cleanup_video_feed_data.py \

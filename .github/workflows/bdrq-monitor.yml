@@ -48,6 +48,8 @@ jobs:
         working-directory: collector
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           BASE_URL: ${{ inputs.base_url || vars.BDRQ_BASE_URL || 'https://g3h4i5j6.bdrq45.cc' }}
           MAX_PAGES: ${{ inputs.max_pages || vars.BDRQ_MONITOR_MAX_PAGES || '1' }}
         run: |

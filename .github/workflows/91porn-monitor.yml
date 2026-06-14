@@ -48,6 +48,8 @@ jobs:
         working-directory: collector
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           BASE_URL: ${{ inputs.base_url || vars.PORN91_BASE_URL || 'https://91porn.com/v.php?next=watch&page=1' }}
           MAX_PAGES: ${{ inputs.max_pages || vars.PORN91_MONITOR_MAX_PAGES || '2' }}
         run: |

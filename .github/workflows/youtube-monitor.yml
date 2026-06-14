@@ -47,6 +47,8 @@ jobs:
         working-directory: collector
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           SHARD_INDEX: ${{ inputs.shard_index || vars.YOUTUBE_MONITOR_SHARD_INDEX || '0' }}
           SHARD_COUNT: ${{ inputs.shard_count || vars.YOUTUBE_MONITOR_SHARD_COUNT || '1' }}
           RETENTION_DAYS: '30'

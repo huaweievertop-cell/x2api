@@ -49,6 +49,8 @@ jobs:
         working-directory: collector
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           BASE_URL: ${{ inputs.base_url || vars.DOUYIN_BASE_URL || 'https://xygrfrfb3g.b2h7y8w.com' }}
           MAX_PAGES: ${{ inputs.max_pages || vars.DOUYIN_MONITOR_MAX_PAGES || '2' }}
         run: |

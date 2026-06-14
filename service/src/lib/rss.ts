@@ -1,4 +1,5 @@
 import type { ItemRecord } from "@/lib/item-service";
+import { cachedJson } from "@/lib/redis-cache";
 
 function escapeXml(value: string) {
   return value
@@ -61,4 +62,13 @@ export function buildFeedXml(feedToken: string, items: ItemRecord[]) {
 ${itemXml}
 </channel>
 </rss>`;
+}
+
+export async function buildCachedFeedXml(feedToken: string, items: ItemRecord[]) {
+  return cachedJson(
+    "rss-feed-xml",
+    [feedToken, items[0]?.id ?? null, items[0]?.storedAt ?? null, items.length],
+    120,
+    async () => buildFeedXml(feedToken, items),
+  );
 }

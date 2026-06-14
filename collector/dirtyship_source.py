@@ -11,6 +11,11 @@ import requests
 from bs4 import BeautifulSoup
 from psycopg.types.json import Jsonb
 
+try:
+    from collector.redis_state import is_in_cooldown, mark_item_seen, set_cooldown
+except ModuleNotFoundError:
+    from redis_state import is_in_cooldown, mark_item_seen, set_cooldown
+
 
 DIRTYSHIP_SITE_NAME = "DirtyShip"
 DIRTYSHIP_SOURCE = "dirtyship"
@@ -799,6 +804,23 @@ def upsert_video_item(conn, target_row: dict, detail: dict, player: dict, verifi
 
 def monitor_site(conn, *, base_url: str, max_pages: int, retention_hours: int, public_pool: bool, dry_run: bool = False) -> dict:
     base_url = normalize_dirtyship_target_value(base_url)
+    cooldown = is_in_cooldown(DIRTYSHIP_SOURCE)
+    if cooldown:
+        print(f"[dirtyship] cooldown active until={cooldown}")
+        return {
+            "pages": 0,
+            "parsed_videos": 0,
+            "verified": 0,
+            "inserted": 0,
+            "updated": 0,
+            "skipped_existing": 0,
+            "skipped_detail_errors": 0,
+            "skipped_unverified": 0,
+            "skipped_old": 0,
+            "skipped_access_errors": 0,
+            "skipped_cooldown": True,
+            "samples": [],
+        }
     target_row = None if dry_run else ensure_target(conn, base_url, public_pool=public_pool)
     cutoff = now_utc() - timedelta(hours=retention_hours)
     inserted = updated = parsed_videos = verified_count = skipped_existing = skipped_detail_errors = skipped_unverified = skipped_old = pages = skipped_access_errors = 0
@@ -812,6 +834,7 @@ def monitor_site(conn, *, base_url: str, max_pages: int, retention_hours: int, p
             skipped_access_errors += 1
             if target_row:
                 upsert_crawl_state(conn, target_row["id"], last_guid=latest_guid, last_error=str(exc), success=False)
+            set_cooldown(DIRTYSHIP_SOURCE, str(exc))
             print(f"[dirtyship] skip page={page} access_error={exc}")
             break
         except Exception as exc:
@@ -825,6 +848,7 @@ def monitor_site(conn, *, base_url: str, max_pages: int, retention_hours: int, p
             break
         for list_item in list_items:
             latest_guid = latest_guid or list_item["guid"]
+            mark_item_seen(DIRTYSHIP_SOURCE, list_item["guid"])
             if list_item.get("published_at") and list_item["published_at"] < cutoff:
                 skipped_old += 1
                 page_old += 1

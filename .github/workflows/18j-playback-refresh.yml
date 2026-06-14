@@ -43,6 +43,8 @@ jobs:
         working-directory: collector
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_NAMESPACE: x2api
           LIMIT: ${{ inputs.limit || '30' }}
         run: |
           python twitter_monitor.py refresh-18j-playback-urls --limit "${LIMIT}"

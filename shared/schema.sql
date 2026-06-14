@@ -458,6 +458,9 @@ CREATE INDEX IF NOT EXISTS idx_items_video_feed ON items (stored_at DESC) WHERE 
 CREATE INDEX IF NOT EXISTS idx_items_video_feed_sort_time
     ON items ((COALESCE(published_at, stored_at)) DESC, stored_at DESC, id DESC)
     WHERE video_url IS NOT NULL AND video_url <> '';
+CREATE INDEX IF NOT EXISTS idx_items_target_video_feed_sort_time
+    ON items (target_id, (COALESCE(published_at, stored_at)) DESC, stored_at DESC, id DESC)
+    WHERE video_url IS NOT NULL AND video_url <> '';
 CREATE INDEX IF NOT EXISTS idx_items_expires_at ON items (expires_at);
 CREATE INDEX IF NOT EXISTS idx_items_video_url_expires_at ON items (video_url_expires_at);
 
@@ -588,7 +591,11 @@ CREATE TABLE IF NOT EXISTS feed_events (
 CREATE INDEX IF NOT EXISTS idx_target_profiles_public_pool ON target_profiles (is_public_pool, weight DESC);
 CREATE INDEX IF NOT EXISTS idx_tags_type_weight ON tags (type, weight DESC, name);
 CREATE INDEX IF NOT EXISTS idx_item_tags_tag_id ON item_tags (tag_id);
+CREATE INDEX IF NOT EXISTS idx_item_tags_item_id ON item_tags (item_id);
 CREATE INDEX IF NOT EXISTS idx_feed_events_client_item ON feed_events (client_id, item_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feed_events_client_recent_video_seen
+    ON feed_events (client_id, event_type, created_at DESC, item_id)
+    WHERE event_type IN ('impression', 'play', 'finish', 'dislike');
 CREATE INDEX IF NOT EXISTS idx_feed_events_created_at ON feed_events (created_at DESC);
 
 CREATE OR REPLACE FUNCTION set_updated_at()

@@ -28,6 +28,11 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
 try:
+    from collector.redis_state import acquire_writer_locks
+except ModuleNotFoundError:
+    from redis_state import acquire_writer_locks
+
+try:
     from collector.avgood_source import (
         AVGOOD_CRITICAL_WINDOW_MINUTES,
         AVGOOD_DEFAULT_BASE_URL,
@@ -6113,20 +6118,23 @@ def main() -> int:
     lock_name = lock_name_for_command(args.func.__name__, args)
     if not lock_name:
         return args.func(args)
-    print(f"[db-lock] waiting lock={lock_name}")
-    lock_conn, lock_slot = wait_for_db_lock(lock_name)
-    print(f"[db-lock] acquired lock={lock_name} slot={lock_slot}")
-    try:
-        return args.func(args)
-    finally:
+    with acquire_writer_locks(lock_name) as used_redis_lock:
+        if used_redis_lock:
+            return args.func(args)
+        print(f"[db-lock] waiting lock={lock_name}")
+        lock_conn, lock_slot = wait_for_db_lock(lock_name)
+        print(f"[db-lock] acquired lock={lock_name} slot={lock_slot}")
         try:
-            release_db_lock(lock_conn, lock_name)
-            release_db_slot(lock_conn, lock_slot)
-            print(f"[db-lock] released lock={lock_name} slot={lock_slot}")
-        except OperationalError as exc:
-            print(f"[db-lock] release failed lock={lock_name}: {exc}")
+            return args.func(args)
         finally:
-            lock_conn.close()
+            try:
+                release_db_lock(lock_conn, lock_name)
+                release_db_slot(lock_conn, lock_slot)
+                print(f"[db-lock] released lock={lock_name} slot={lock_slot}")
+            except OperationalError as exc:
+                print(f"[db-lock] release failed lock={lock_name}: {exc}")
+            finally:
+                lock_conn.close()
 
 
 if __name__ == "__main__":
