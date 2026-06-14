@@ -4152,7 +4152,7 @@ def query_records(
             FROM items i
             INNER JOIN targets t ON t.id = i.target_id
             WHERE (
-                %s IS NULL
+                %s::text IS NULL
                 OR EXISTS (
                     SELECT 1
                     FROM subscriptions s
@@ -4163,7 +4163,7 @@ def query_records(
                 )
             )
               AND (
-                %s IS NULL
+                %s::text IS NULL
                 OR LOWER(CASE
                     WHEN t.source = 'youtube' THEN 'youtube:' || t.value
                     WHEN t.source = 'heiliao' THEN 'heiliao:' || t.value
@@ -4189,14 +4189,14 @@ def query_records(
                 END) = %s
               )
               AND (
-                %s IS NULL
+                %s::text IS NULL
                 OR LOWER(COALESCE(i.content, '')) LIKE %s
                 OR LOWER(COALESCE(i.raw_content, '')) LIKE %s
                 OR LOWER(COALESCE(i.translated_content, '')) LIKE %s
                 OR LOWER(COALESCE(i.author, '')) LIKE %s
               )
-              AND (%s IS NULL OR i.stored_at >= %s)
-              AND (%s IS NULL OR i.stored_at <= %s)
+              AND (%s::timestamptz IS NULL OR i.stored_at >= %s)
+              AND (%s::timestamptz IS NULL OR i.stored_at <= %s)
             ORDER BY COALESCE(i.published_at, i.stored_at) DESC, i.stored_at DESC
             LIMIT %s
             """,
